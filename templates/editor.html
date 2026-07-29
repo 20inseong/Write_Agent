@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}에디터 · 글쓰기 에이전트{% endblock %}
+
+{% block extra_head %}
+<style>
+  .ai-draft-pane {
+    user-select: none;
+    -webkit-user-select: none;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="flex h-screen w-full flex-col overflow-hidden">
+  <header class="flex shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 py-3">
+    <a href="{% url 'writer_setup' %}" class="text-sm text-indigo-600 hover:text-indigo-800">← 블록 세팅</a>
+    <span class="text-sm font-medium text-slate-600">2분할 에디터</span>
+    <span class="w-16"></span>
+  </header>
+
+  <div class="flex min-h-0 flex-1 flex-row">
+    <section
+      class="ai-draft-pane flex w-1/2 flex-col overflow-y-auto bg-slate-800 p-6 text-slate-200"
+      aria-label="AI 초안 뷰어"
+    >
+      <h2 class="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-400">AI 초안 뷰어</h2>
+      <article class="space-y-4 text-sm leading-relaxed">
+        <p>
+          창밖으로 스며드는 새벽빛이 책상 위 종이를 옅게 물들였다. 주인공은 잉크가 마르지 않은 문장 앞에서
+          한참을 멈춰 섰다. 이 장면은 블록 세팅에서 입력한 키워드를 바탕으로 생성된 더미 초안입니다.
+        </p>
+        <p>
+          복도 끝에서 들려온 발소리는 점점 가까워졌고, 문손잡이가 천천히 돌아갔다. “아직 시간이
+          남았어.” 조력자의 목소리가 낮게 울렸다. “독자가 기억할 문장은, 지금 네가 망설이는 이 순간이 아니야.”
+        </p>
+        <p>
+          (이 영역의 텍스트는 참고용 초안이며, 드래그·복사가 제한되어 있습니다. 우측 에디터에서
+          자유롭게 집필하세요.)
+        </p>
+      </article>
+    </section>
+
+    <section class="flex w-1/2 flex-col bg-white" aria-label="메인 에디터">
+      <div class="flex min-h-0 flex-1 flex-col p-4">
+        <label for="main-editor" class="mb-2 text-sm font-medium text-slate-700">메인 에디터</label>
+        <textarea
+          id="main-editor"
+          class="min-h-0 w-full flex-1 resize-none rounded-lg border border-slate-300 p-4 text-base leading-relaxed focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          placeholder="여기에 소설을 작성하세요…"
+        ></textarea>
+      </div>
+      <footer class="flex shrink-0 flex-wrap items-center gap-3 border-t border-slate-200 px-4 py-3">
+        <span id="char-count" class="text-sm tabular-nums text-slate-600">현재 글자수 / 5000자</span>
+        <div class="ml-auto flex flex-wrap gap-2">
+          <button
+            type="button"
+            class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          >
+            맞춤법 검수
+          </button>
+          <button
+            type="button"
+            class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          >
+            AI 초안 일치율 확인
+          </button>
+        </div>
+      </footer>
+    </section>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  (function () {
+    var editor = document.getElementById("main-editor");
+    var counter = document.getElementById("char-count");
+    var maxChars = 5000;
+
+    function updateCount() {
+      var len = editor.value.length;
+      counter.textContent = "현재 " + len + "자 / " + maxChars + "자";
+    }
+
+    editor.addEventListener("input", updateCount);
+    updateCount();
+  })();
+</script>
+{% endblock %}

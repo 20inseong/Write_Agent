@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}소설 블록 세팅 · 글쓰기 에이전트{% endblock %}
+
+{% block content %}
+<main class="mx-auto min-h-screen max-w-3xl px-4 py-10">
+  <header class="mb-8">
+    <a href="{% url 'home' %}" class="text-sm text-indigo-600 hover:text-indigo-800">← 홈으로</a>
+    <h1 class="mt-2 text-3xl font-bold tracking-tight text-slate-800">소설 블록 세팅</h1>
+    <p class="mt-2 text-sm text-slate-500">장면별 목표와 키워드를 블록 단위로 구성하세요.</p>
+  </header>
+
+  <div id="blocks-container" class="space-y-4">
+    {% include "block_partial.html" with block_index=initial_block_index %}
+  </div>
+
+  <div class="mt-6">
+    <button
+      type="button"
+      id="add-block-btn"
+      hx-get="{% url 'add_block' %}?index=2"
+      hx-target="#blocks-container"
+      hx-swap="beforeend"
+      class="w-full rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-600 transition hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-700"
+    >
+      + 블록 추가
+    </button>
+  </div>
+
+  <footer class="mt-10 border-t border-slate-200 pt-8">
+    <a
+      href="{% url 'editor' %}"
+      class="inline-flex w-full items-center justify-center rounded-xl bg-indigo-600 px-6 py-4 text-base font-semibold text-white shadow-md transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+    >
+      AI 초안 생성 시작
+    </a>
+  </footer>
+</main>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  document.body.addEventListener("htmx:afterSwap", function (event) {
+    if (event.detail.target.id !== "blocks-container") {
+      return;
+    }
+    const btn = document.getElementById("add-block-btn");
+    const blocks = document.querySelectorAll("#blocks-container [data-block-index]");
+    const nextIndex = blocks.length + 1;
+    const baseUrl = "{% url 'add_block' %}";
+    btn.setAttribute("hx-get", baseUrl + "?index=" + nextIndex);
+    htmx.process(btn);
+  });
+</script>
+{% endblock %}

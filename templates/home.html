@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}홈 · 글쓰기 에이전트{% endblock %}
+
+{% block content %}
+<main class="flex min-h-screen flex-col items-center justify-center px-4 py-12">
+  <h1 class="mb-12 text-2xl font-semibold tracking-tight text-slate-700">글쓰기 에이전트</h1>
+  <nav class="flex w-full max-w-md flex-col gap-4">
+    <button
+      type="button"
+      disabled
+      class="w-full rounded-2xl border border-slate-200 bg-white px-8 py-6 text-lg font-medium text-slate-400 shadow-sm"
+    >
+      소설 DB 구축
+    </button>
+    <a
+      href="{% url 'writer_setup' %}"
+      class="w-full rounded-2xl border border-indigo-200 bg-indigo-600 px-8 py-6 text-center text-lg font-semibold text-white shadow-md transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+    >
+      소설 작성
+    </a>
+    <button
+      type="button"
+      disabled
+      class="w-full rounded-2xl border border-slate-200 bg-white px-8 py-6 text-lg font-medium text-slate-400 shadow-sm"
+    >
+      설정
+    </button>
+  </nav>
+</main>
+{% endblock %}
