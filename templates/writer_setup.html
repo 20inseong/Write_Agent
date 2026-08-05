@@ -10,31 +10,35 @@
     <p class="mt-2 text-sm text-slate-500">장면별 목표와 키워드를 블록 단위로 구성하세요.</p>
   </header>
 
-  <div id="blocks-container" class="space-y-4">
-    {% include "block_partial.html" with block_index=initial_block_index %}
-  </div>
+  <form method="post" action="{% url 'editor' %}">
+    {% csrf_token %}
 
-  <div class="mt-6">
-    <button
-      type="button"
-      id="add-block-btn"
-      hx-get="{% url 'add_block' %}?index=2"
-      hx-target="#blocks-container"
-      hx-swap="beforeend"
-      class="w-full rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-600 transition hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-700"
-    >
-      + 블록 추가
-    </button>
-  </div>
-
-  <footer class="mt-10 border-t border-slate-200 pt-8">
-    <a
-      href="{% url 'editor' %}"
-      class="inline-flex w-full items-center justify-center rounded-xl bg-indigo-600 px-6 py-4 text-base font-semibold text-white shadow-md transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-    >
-      AI 초안 생성 시작
-    </a>
-  </footer>
+    <div id="blocks-container" class="space-y-4">
+      {% include "block_partial.html" with block_index=initial_block_index %}
+    </div>
+  
+    <div class="mt-6">
+      <button
+        type="button"
+        id="add-block-btn"
+        hx-get="{% url 'add_block' %}?index=2"
+        hx-target="#blocks-container"
+        hx-swap="beforeend"
+        class="w-full rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-600 transition hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-700"
+      >
+        + 블록 추가
+      </button>
+    </div>
+  
+    <footer class="mt-10 border-t border-slate-200 pt-8">
+      <button
+        type="submit"
+        class="inline-flex w-full items-center justify-center rounded-xl bg-indigo-600 px-6 py-4 text-base font-semibold text-white shadow-md transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+      >
+        AI 초안 생성 시작
+      </button>
+    </footer>
+  </form>
 </main>
 {% endblock %}
 
@@ -51,5 +55,60 @@
     btn.setAttribute("hx-get", baseUrl + "?index=" + nextIndex);
     htmx.process(btn);
   });
+
+  function updateBlockNumbers() {
+    // 화면에 남은 모든 블록을 가져옴
+    const blocks = document.querySelectorAll('.input-block'); 
+    
+    blocks.forEach((block, index) => {
+        const actualNumber = index + 1;
+        
+        // 블록 제목 텍스트 수정
+        const titleLabel = block.querySelector('.block-title'); 
+        if (titleLabel) {
+            titleLabel.textContent = `입력 블록 #${actualNumber}`;
+        }
+
+        // name 속성 숫자 업데이트
+        const inputs = block.querySelectorAll('input, textarea');
+        inputs.forEach(input => {
+            const oldName = input.getAttribute('name');
+            if (oldName) {
+                // 맨 뒤의 '_' 이후의 숫자를 잘라내고 새 번호 붙이기
+                const baseName = oldName.substring(0, oldName.lastIndexOf('_'));
+                input.setAttribute('name', `${baseName}_${actualNumber}`);
+            }
+
+            // id 속성 숫자도 업데이트
+            const oldId = input.getAttribute('id');
+            if (oldId) {
+                const baseId = oldId.substring(0, oldId.lastIndexOf('-'));
+                const newId = `${baseId}-${actualNumber}`;
+                input.setAttribute('id', newId);
+                
+                // label의 for 속성도 같이 업데이트 (id와 짝꿍이므로)
+                const label = block.querySelector(`label[for="${oldId}"]`);
+                if (label) {
+                    label.setAttribute('for', newId);
+                }
+            }
+        });
+    });
+
+    // '+ 블록 추가' 버튼의 다음 HTMX 호출 번호 업데이트
+    const addBtn = document.getElementById('add-block-btn'); // 🌟 이 ID가 맞는지 확인 필요!
+    if (addBtn) {
+        const nextIndex = blocks.length + 1;
+        // hx-get의 URL을 새로 계산된 번호로 덮어씌웁니다.
+        addBtn.setAttribute('hx-get', `{% url 'add_block' %}?index=${nextIndex}`);
+        htmx.process(addBtn); 
+    }
+}
+
+// HTMX로 새 블록이 '추가'되었을 때도 꼬이지 않게 함수 한 번 실행
+document.body.addEventListener('htmx:afterSettle', function(event) {
+    updateBlockNumbers();
+});
+
 </script>
 {% endblock %}
