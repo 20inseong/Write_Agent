@@ -4,7 +4,8 @@ from dotenv import load_dotenv
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_GET
-from .prompts import prompt_labels, system_prompt
+from .prompt import prompt_labels, system_prompt
+from .models import StoryElement
 
 load_dotenv()
 
@@ -69,6 +70,37 @@ def editor(request: HttpRequest) -> HttpResponse:
             print(f"[블록 {i}] {block}")
         print("===========================================")
 
+        # 작가가 입력한 모든 블록의 텍스트를 하나의 긴 끈으로 합치기
+        all_user_input_text = ""
+        for block in sorted_blocks:
+            for v in block.values():
+                all_user_input_text += f" {v}"
+
+        # DB를 뒤져서 합친 텍스트 안에 키워드가 있는지 확인
+        all_elements = StoryElement.objects.all()
+        matched_contexts = []
+        
+        for element in all_elements:
+            keyword_list = [k.strip() for k in element.keywords.split(',')]
+            for kw in keyword_list:
+                if kw and kw in all_user_input_text:  # 키워드가 작가의 글에 있다면?
+                    category_name = element.get_category_display()
+                    matched_contexts.append(f"[{category_name}: {element.name}] {element.content}")
+                    break
+        
+        # 찾은 설정들을 하나로 묶기
+        rag_context_text = "\n".join(matched_contexts)
+        
+        print("===== AI에게 주입되는 DB 설정 =====")
+        print(rag_context_text if rag_context_text else "추출된 키워드 없음")
+        print("===================================")
+
+        # 기존 system_prompt에 DB 설정을 덧붙여서 최종 시스템 프롬프트 완성
+        enhanced_system_prompt = system_prompt
+        if rag_context_text:
+            enhanced_system_prompt += f"\n\n[현재 장면 관련 참고 설정]\n{rag_context_text}"
+
+
         # 제미나이 API 세팅 (환경 변수에서 키 가져오기)
         api_key = os.environ.get("GEMINI_API_KEY")
         if not api_key:
@@ -83,7 +115,7 @@ def editor(request: HttpRequest) -> HttpResponse:
 
         model = genai.GenerativeModel(
             model_name='gemini-flash-latest',
-            system_instruction=system_prompt
+            system_instruction=enhanced_system_prompt
         )
 
         for i, block in enumerate(sorted_blocks, 1):
