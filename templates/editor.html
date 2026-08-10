@@ -2,15 +2,6 @@
 
 {% block title %}에디터 · 글쓰기 에이전트{% endblock %}
 
-{% block extra_head %}
-<style>
-  .ai-draft-pane {
-    user-select: none;
-    -webkit-user-select: none;
-  }
-</style>
-{% endblock %}
-
 {% block content %}
 <div class="flex h-screen w-full flex-col overflow-hidden">
   <header class="flex shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 py-3">
@@ -28,7 +19,7 @@
       <article class="space-y-4 text-sm leading-relaxed">
         {% if ai_content %}
           <!-- AI 생성 결과 출력 (linebreaksbr 필터로 줄바꿈 유지) -->
-          <div class="text-slate-200">
+          <div id="ai-draft-text" class="text-slate-200">
             {{ ai_content|linebreaksbr }}
           </div>
         {% else %}
@@ -58,12 +49,10 @@
           >
             맞춤법 검수
           </button>
-          <button
-            type="button"
-            class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-          >
-            AI 초안 일치율 확인
-          </button>
+          <!-- AI 일치도 전용 패널 -->
+          <div class="flex items-center rounded-lg bg-slate-50 px-4 py-2 border border-slate-200">
+            <span id="similarity-display" class="text-sm font-bold text-slate-600">AI 초안 일치도: 0%</span>
+          </div>
         </div>
       </footer>
     </section>
@@ -76,15 +65,89 @@
   (function () {
     var editor = document.getElementById("main-editor");
     var counter = document.getElementById("char-count");
-    var maxChars = 5000;
+    const aiDraftElement = document.querySelector(".ai-draft-pane article");
+    const similarityDisplay = document.getElementById("similarity-display");
+    const maxChars = 5000;
 
-    function updateCount() {
-      var len = editor.value.length;
-      counter.textContent = "현재 " + len + "자 / " + maxChars + "자";
+    // ----------------------------------------------------
+    // N-gram (2어절) 생성기
+    // ----------------------------------------------------
+    function getBigrams(text) {
+      // 특수기호를 지우고 순수 한글/영문/숫자만 남김
+      const cleanText = text.replace(/[.,!?\"\'\n\r]/g, " ").trim();
+      
+      // 띄어쓰기 기준으로 단어 분리
+      const words = cleanText.split(/\s+/).filter(w => w.length > 0);
+      
+      const bigrams = new Set(); // 중복 방지를 위해 Set 사용
+      
+      // 글이 너무 짧아 1단어밖에 없으면 그냥 반환
+      if (words.length < 2) {
+        if (words.length === 1) bigrams.add(words[0]);
+        return bigrams;
+      }
+      
+      // i번째 단어와 i+1번째 단어를 묶어서 집합에 추가
+      for (let i = 0; i < words.length - 1; i++) {
+        bigrams.add(words[i] + " " + words[i + 1]);
+      }
+      
+      return bigrams;
     }
 
-    editor.addEventListener("input", updateCount);
-    updateCount();
+    // AI 초안 텍스트를 가져와서 미리 바이그램으로 만들어둠
+    const aiText = aiDraftElement ? aiDraftElement.innerText || "" : "";
+    const aiBigrams = getBigrams(aiText);
+
+    // ----------------------------------------------------
+    // 실시간 입력 감지 및 유사도 계산
+    // ----------------------------------------------------
+    function handleInput() {
+      const userText = editor.value;
+      counter.textContent = `현재 ${userText.length}자 / ${maxChars}자`;
+
+      // AI 초안이 없거나 작가가 아직 글을 안 썼으면 0%
+      if (aiBigrams.size === 0 || userText.trim().length === 0) {
+        similarityDisplay.textContent = `AI 의존도: 0%`;
+        similarityDisplay.className = "text-sm font-bold text-slate-600";
+        return;
+      }
+
+      // 작가가 쓴 글도 똑같이 2어절 덩어리로 변환
+      const userBigrams = getBigrams(userText);
+
+      // 교집합 구하기
+      let intersectionCount = 0;
+      userBigrams.forEach(bigram => {
+        if (aiBigrams.has(bigram)) intersectionCount++;
+      });
+
+      // 합집합 크기 구하기
+      const unionSet = new Set([...aiBigrams, ...userBigrams]);
+      const unionCount = unionSet.size;
+
+      // 자카드 유사도(%) 계산
+      let percent = 0;
+      if (unionCount > 0) {
+        percent = Math.round((intersectionCount / unionCount) * 100);
+      }
+
+      // 스코어링에 따른 UI 색상 변경 (60% 초과면 위험, 그 이하면 안전)
+      if (percent > 60) {
+        similarityDisplay.className = "text-sm font-bold text-red-500";
+      } else if (percent > 20) {
+        similarityDisplay.className = "text-sm font-bold text-amber-500"; // 스위트스팟 (주황색)
+      } else {
+        similarityDisplay.className = "text-sm font-bold text-green-600"; // 오리지널리티 확보 (녹색)
+      }
+      
+      // 화면에 퍼센트 렌더링
+      similarityDisplay.textContent = `AI 의존도: ${percent}%`;
+    }
+
+    // 에디터에 타이핑(input) 할 때마다 검사 실행
+    editor.addEventListener("input", handleInput);
+    handleInput();
   })();
 </script>
 {% endblock %}
