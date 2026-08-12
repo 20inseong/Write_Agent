@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}글쓰기 에이전트{% endblock %}
+
+{% block content %}
+<main class="flex min-h-[calc(100vh-3.5rem)] flex-col items-center justify-center px-4 py-16">
+  <div class="w-full max-w-2xl text-center">
+    <p class="mb-3 text-sm font-semibold uppercase tracking-widest text-indigo-600">AI Writing Studio</p>
+    <h1 class="text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
+      블록 기반으로 집필하는<br class="hidden sm:block"> 스마트 소설 작업실
+    </h1>
+    <p class="mx-auto mt-6 max-w-lg text-base leading-relaxed text-slate-600">
+      장면별 블록 세팅, AI 초안 생성, 2분할 에디터까지 — 작가의 창작 흐름을 한곳에서 이어갈 수 있습니다.
+    </p>
+    <div class="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
+      <a
+        href="{% url 'login' %}"
+        class="w-full rounded-xl border border-slate-300 bg-white px-8 py-3.5 text-center text-base font-semibold text-slate-800 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
+      >
+        로그인
+      </a>
+      <a
+        href="{% url 'signup' %}"
+        class="w-full rounded-xl bg-indigo-600 px-8 py-3.5 text-center text-base font-semibold text-white shadow-md transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
+      >
+        회원가입
+      </a>
+    </div>
+  </div>
+</main>
+{% endblock %}

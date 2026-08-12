@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="flex items-center justify-center min-h-screen bg-gray-100">
+    <div class="bg-white p-8 rounded-lg shadow-md w-96">
+        <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">로그인</h2>
+        <form method="post" action="{% url 'login' %}">
+            {% csrf_token %}
+            <div class="space-y-4">
+                {{ form.as_p }}
+            </div>
+            <button type="submit" class="w-full mt-6 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded transition duration-200">
+                에디터 진입하기
+            </button>
+        </form>
+        <p class="mt-4 text-center text-sm text-gray-600">
+            아직 작가 등록을 안 하셨나요? <a href="{% url 'signup' %}" class="text-blue-500 hover:underline">회원가입</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

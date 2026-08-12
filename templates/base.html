@@ -9,6 +9,30 @@
   {% block extra_head %}{% endblock %}
 </head>
 <body class="min-h-screen bg-slate-50 text-slate-900 antialiased">
+  <header class="border-b border-slate-200 bg-white">
+    <nav class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+      <a href="{% if user.is_authenticated %}{% url 'dashboard' %}{% else %}{% url 'home' %}{% endif %}" class="text-sm font-semibold text-slate-800 hover:text-indigo-600">
+        글쓰기 에이전트
+      </a>
+      <div class="flex items-center gap-3">
+        {% if user.is_authenticated %}
+          <span class="hidden text-sm text-slate-500 sm:inline">{{ user.username }}</span>
+          <form method="post" action="{% url 'logout' %}" class="inline">
+            {% csrf_token %}
+            <button
+              type="submit"
+              class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+            >
+              로그아웃
+            </button>
+          </form>
+        {% else %}
+          <a href="{% url 'login' %}" class="text-sm font-medium text-slate-600 hover:text-indigo-600">로그인</a>
+          <a href="{% url 'signup' %}" class="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-indigo-700">회원가입</a>
+        {% endif %}
+      </div>
+    </nav>
+  </header>
   {% block content %}{% endblock %}
   {% block extra_scripts %}{% endblock %}
 </body>

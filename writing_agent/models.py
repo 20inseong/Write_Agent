@@ -1,5 +1,6 @@
 import uuid
 from django.db import models
+from django.contrib.auth.models import User
 from django.conf import settings
 
 # 유저 스탯 테이블: 작가의 오리지널리티 점수와 뱃지를 독립적으로 관리

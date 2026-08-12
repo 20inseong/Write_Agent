@@ -2,15 +2,40 @@ import os
 import google.generativeai as genai
 from dotenv import load_dotenv
 from django.http import HttpRequest, HttpResponse
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.views.decorators.http import require_GET
 from .prompt import prompt_labels, system_prompt
 from .models import StoryElement
+from django.contrib.auth import login
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.views import LoginView, LogoutView
+from .forms import CustomUserCreationForm
+from django.contrib.auth.decorators import login_required
 
 load_dotenv()
 
 def home(request: HttpRequest) -> HttpResponse:
-    return render(request, "home.html")
+    return render(request, "landing.html")
+
+
+@login_required
+def dashboard(request: HttpRequest) -> HttpResponse:
+    return render(request, "dashboard.html")
+
+
+# 회원가입 뷰
+def signup_view(request):
+    if request.method == 'POST':
+        form = CustomUserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)  # 회원가입 성공 시 자동 로그인
+            return redirect('dashboard')
+    else:
+        form = CustomUserCreationForm()
+    
+    return render(request, 'signup.html', {'form': form})
+
 
 # 블록의 틀을 세팅
 def writer_setup(request: HttpRequest) -> HttpResponse:
