@@ -12,6 +12,17 @@ class AuthorProfile(models.Model):
     def __str__(self):
         return f"{self.user.username} 작가 프로필"
 
+
+class Novel(models.Model):
+    title = models.CharField(max_length=200, verbose_name="소설 제목")
+    description = models.TextField(blank=True, verbose_name="작품 소개")
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name="작가")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title
+
+
 class StoryElement(models.Model):
     # 카테고리 정의
     CATEGORY_CHOICES = (
@@ -27,6 +38,9 @@ class StoryElement(models.Model):
     
     # [보안] 데이터 격리: 이 데이터의 소유자
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='story_elements')
+
+    # 특정 소설에 속하도록 묶어주는 외래키 추가
+    novel = models.ForeignKey(Novel, on_delete=models.CASCADE, null=True, blank=True, related_name="elements")
 
     # 유저가 관리할 폴더 경로
     folder_path = models.CharField(max_length=255, default="/", verbose_name="폴더 경로")

@@ -1,5 +1,4 @@
 import os
-import google.generativeai as genai
 from dotenv import load_dotenv
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render, redirect
@@ -11,10 +10,14 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.views import LoginView, LogoutView
 from .forms import CustomUserCreationForm
 from django.contrib.auth.decorators import login_required
+from google import genai
+from google.genai import types
 
 load_dotenv()
 
 def home(request: HttpRequest) -> HttpResponse:
+    if request.user.is_authenticated:
+        return redirect('dashboard')
     return render(request, "landing.html")
 
 
@@ -38,6 +41,7 @@ def signup_view(request):
 
 
 # 블록의 틀을 세팅
+@login_required
 def writer_setup(request: HttpRequest) -> HttpResponse:
    
     return render(
@@ -46,6 +50,7 @@ def writer_setup(request: HttpRequest) -> HttpResponse:
         {"initial_block_index": 1})
 
 
+@login_required
 @require_GET
 def add_block(request: HttpRequest) -> HttpResponse:
     try:
@@ -59,6 +64,7 @@ def add_block(request: HttpRequest) -> HttpResponse:
     )
 
 
+@login_required
 def editor(request: HttpRequest) -> HttpResponse:
     ai_draft_text = ""
     
@@ -102,10 +108,10 @@ def editor(request: HttpRequest) -> HttpResponse:
                 all_user_input_text += f" {v}"
 
         # DB를 뒤져서 합친 텍스트 안에 키워드가 있는지 확인
-        all_elements = StoryElement.objects.all()
+        user_elements = StoryElement.objects.filter(author=request.user, is_deleted=False)
         matched_contexts = []
         
-        for element in all_elements:
+        for element in user_elements:
             keyword_list = [k.strip() for k in element.keywords.split(',')]
             for kw in keyword_list:
                 if kw and kw in all_user_input_text:  # 키워드가 작가의 글에 있다면?
@@ -131,17 +137,10 @@ def editor(request: HttpRequest) -> HttpResponse:
         if not api_key:
             print("🚨 에러: .env 파일에서 GEMINI_API_KEY를 찾을 수 없습니다!")
             
-        genai.configure(api_key=api_key)
-
-
+        client = genai.Client(api_key=api_key)
         
         final_draft = ""
         previous_scene_summary = ""
-
-        model = genai.GenerativeModel(
-            model_name='gemini-flash-latest',
-            system_instruction=enhanced_system_prompt
-        )
 
         for i, block in enumerate(sorted_blocks, 1):
             instructions_list = []
@@ -164,9 +163,13 @@ def editor(request: HttpRequest) -> HttpResponse:
 
             # 제미나이 API 호출
             try:
-                response = model.generate_content(
-                    user_prompt,
-                    generation_config=genai.types.GenerationConfig(temperature=0.7)
+                response = client.models.generate_content(
+                    model='gemini-2.5-flash',
+                    contents=user_prompt,
+                    config=types.GenerateContentConfig(
+                        system_instruction=enhanced_system_prompt,
+                        temperature=0.7,
+                    )
                 )
                 
                 scene_text = response.text.strip()
