@@ -12,7 +12,7 @@
     </div>
     <ul class="p-4 space-y-2 w-64">
       <li>
-        <button class="w-full text-left px-4 py-3 text-sm font-medium text-slate-700 rounded-xl hover:bg-slate-100 flex items-center gap-3 transition">
+        <button id="btn-open-add-modal" class="w-full text-left px-4 py-3 text-sm font-medium text-slate-700 rounded-xl hover:bg-slate-100 flex items-center gap-3 transition">
           <span class="text-lg">➕</span> 새 세계관 추가
         </button>
       </li>
@@ -52,7 +52,9 @@
         
         <!-- 파이썬에서 넘겨준 novels 데이터를 반복문으로 출력 -->
         {% for novel in novels %}
-        <a href="{% url 'world_category' novel.id %}" class="text-left bg-white p-6 rounded-2xl border-2 border-slate-200 shadow-sm hover:shadow-md hover:border-indigo-400 transition group h-40 flex flex-col justify-between block">
+        <a href="{% url 'world_category' novel.id %}" class="novel-card text-left bg-white p-6 rounded-2xl border-2 border-slate-200 shadow-sm hover:shadow-md hover:border-indigo-400 transition group h-40 flex flex-col justify-between block"
+           data-name="{{ novel.title }}"
+           data-delete-url="{% url 'delete_novel' novel.id %}">
           <div>
             <!-- 소설 제목 -->
             <h3 class="text-lg font-bold text-slate-800 group-hover:text-indigo-600 transition">{{ novel.title }}</h3>
@@ -87,6 +89,50 @@
 
   </div>
 </div>
+
+<!-- 세계관 추가 -->
+<div id="add-novel-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900 bg-opacity-50 transition-opacity p-4">
+  <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 relative">
+    
+    <button id="btn-close-modal" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 z-10">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+    </button>
+
+    <h3 class="text-xl font-bold text-slate-800 mb-6 border-b pb-3">새 세계관 프로젝트 생성</h3>
+    
+    <form method="POST" action="{% url 'create_novel' %}">
+      {% csrf_token %}
+      
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-1">세계관 제목 (필수)</label>
+          <input type="text" name="title" required placeholder="예: 창파귀해" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-1">작품 소개 / 로그라인</label>
+          <textarea name="description" rows="3" placeholder="어떤 이야기인가요?" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none resize-none"></textarea>
+        </div>
+      </div>
+
+      <div class="mt-6 flex justify-end gap-3 pt-4 border-t">
+        <button type="button" id="btn-cancel-modal" class="px-5 py-2.5 text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 transition font-bold">취소</button>
+        <button type="submit" class="px-5 py-2.5 text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition font-bold shadow-md">생성하기</button>
+      </div>
+    </form>   
+  </div>
+</div>
+
+<!-- 세계관 삭제 -->
+<div id="custom-context-menu" class="hidden absolute z-50 w-48 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden text-sm">
+  <form id="delete-form" method="POST" action="">
+    {% csrf_token %}
+    <button type="submit" class="w-full text-left px-4 py-3 text-red-600 hover:bg-red-50 flex items-center gap-3 transition font-medium">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+      <span id="delete-target-name">삭제하기</span>
+    </button>
+  </form>
+</div>
+
 {% endblock %}
 
 {% block extra_scripts %}
@@ -95,7 +141,6 @@
     const sidebar = document.getElementById('sidebar-drawer');
     const toggleBtn = document.getElementById('btn-toggle-sidebar');
 
-    // 토글 버튼 클릭 시 사이드바의 너비를 조절하는 방식으로 수정
     toggleBtn.addEventListener('click', function() {
       if (sidebar.classList.contains('w-64')) {
         // 닫기
@@ -107,6 +152,49 @@
         sidebar.classList.remove('w-0', 'border-r-0');
       }
     });
+
+    // 2. 모달 생성 스크립트
+    const modal = document.getElementById('add-novel-modal');
+    const openBtn = document.getElementById('btn-open-add-modal');
+    const closeBtn = document.getElementById('btn-close-modal');
+    const cancelBtn = document.getElementById('btn-cancel-modal');
+
+    if (openBtn) openBtn.addEventListener('click', () => modal.classList.remove('hidden'));
+    if (closeBtn) closeBtn.addEventListener('click', () => modal.classList.add('hidden'));
+    if (cancelBtn) cancelBtn.addEventListener('click', () => modal.classList.add('hidden'));
+    
+    window.addEventListener('click', (e) => {
+      if (e.target === modal) modal.classList.add('hidden');
+    });
+
+    // 3. 우클릭 컨텍스트 메뉴 스크립트
+    const contextMenu = document.getElementById('custom-context-menu');
+    const deleteForm = document.getElementById('delete-form');
+    const deleteTargetName = document.getElementById('delete-target-name');
+    const cards = document.querySelectorAll('.novel-card');
+
+    cards.forEach(card => {
+      card.addEventListener('contextmenu', function(e) {
+        e.preventDefault(); // 기본 우클릭 메뉴 막기
+        
+        const deleteUrl = this.getAttribute('data-delete-url');
+        const novelName = this.getAttribute('data-name');
+        
+        deleteForm.action = deleteUrl;
+        deleteTargetName.innerText = `'${novelName}' 삭제`;
+        
+        contextMenu.style.left = `${e.pageX}px`;
+        contextMenu.style.top = `${e.pageY}px`;
+        contextMenu.classList.remove('hidden');
+      });
+    });
+
+    window.addEventListener('click', (e) => {
+      if (!contextMenu.contains(e.target)) {
+        contextMenu.classList.add('hidden');
+      }
+    });
+
   });
 </script>
 {% endblock %}

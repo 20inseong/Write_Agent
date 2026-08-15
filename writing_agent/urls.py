@@ -20,5 +20,7 @@ urlpatterns = [
 
     path("world/<int:novel_id>/<str:category>/<uuid:element_id>/delete/", views.world_element_delete_view, name="world_element_delete"),
 
-    # path("editor/world/<int:novel_id>/", views.world_editor, name="world_editor"),
+    path('world/create/', views.create_novel, name='create_novel'),
+    path('world/delete/<int:novel_id>/', views.delete_novel, name='delete_novel'),
+    path('world/element_action/<int:novel_id>/<str:category>/', views.world_element_bulk_action, name='world_element_bulk_action'),
 ]
