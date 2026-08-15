@@ -10,7 +10,7 @@
     <p class="mt-2 text-sm text-slate-500">장면별 목표와 키워드를 블록 단위로 구성하세요.</p>
   </header>
 
-  <form method="post" action="{% url 'editor' %}">
+  <form id="editor-setup-form" method="post" action="{% url 'editor' %}">
     {% csrf_token %}
 
     <div id="blocks-container" class="space-y-4">
@@ -70,7 +70,7 @@
         }
 
         // name 속성 숫자 업데이트
-        const inputs = block.querySelectorAll('input, textarea');
+        const inputs = block.querySelectorAll('input:not([type="hidden"]), textarea');
         inputs.forEach(input => {
             const oldName = input.getAttribute('name');
             if (oldName) {
@@ -109,6 +109,100 @@
 document.body.addEventListener('htmx:afterSettle', function(event) {
     updateBlockNumbers();
 });
+
+document.addEventListener("DOMContentLoaded", function() {
+    const form = document.getElementById('editor-setup-form');
+
+    if (!form) return;
+
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalBtnText = "AI 초안 생성 시작";
+
+    // TIP text 생성
+    let tipText = document.getElementById('ai-tip-text');
+    if (!tipText) {
+        tipText = document.createElement('p');
+        tipText.id = 'ai-tip-text';
+        // animation 적용
+        tipText.className = 'mb-4 text-sm font-bold text-indigo-500 text-center transition-all duration-300 opacity-0 h-0 overflow-hidden';
+        tipText.innerText = '💡 팁: 빈칸을 모두 구체적으로 채우면 AI가 훨씬 정교한 초안을 완성합니다.';
+        submitBtn.parentNode.insertBefore(tipText, submitBtn);
+    }
+
+    // 주소창에서 mode 꼬리표 확인 (?mode=random)
+    const urlParams = new URLSearchParams(window.location.search);
+    const isRandomMode = urlParams.get('mode') === 'random';
+
+    // 랜덤 모드라면 검사 없이 통과
+    if (isRandomMode) {
+      submitBtn.disabled = false;
+      submitBtn.innerText = originalBtnText;
+      return; 
+    }
+
+    // 세계관 블록 모드일 때 빈칸 검사 로직
+    function checkInputs() {
+      // 폼 안의 모든 텍스트 입력칸 찾기(숫자 제외)
+      const inputs = form.querySelectorAll('input:not([type="hidden"]):not([type="number"]), textarea');
+      
+      let filledCount = 0;
+      let totalCount = 0;
+
+      // 전체 입력칸 개수와 채워진 입력칸 개수 세기
+      inputs.forEach(input => {
+        totalCount++;
+        if (input.value.trim() !== '') {
+            filledCount++;
+        }
+      });
+
+      // 조건에 따른 UI 업데이트
+      if (filledCount === 0) {
+        // [상태 A] 완전 빈칸: 버튼 잠금 & 팁 숨기기
+        submitBtn.disabled = true;
+        submitBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+        submitBtn.classList.add('opacity-50', 'cursor-not-allowed', 'bg-slate-400');
+        submitBtn.innerText = '블록 내용을 입력해주세요 🔒';
+        
+        tipText.classList.remove('opacity-100', 'h-5');
+        tipText.classList.add('opacity-0', 'h-0');
+
+      } else if (filledCount > 0 && filledCount < totalCount) {
+        // [상태 B] 일부만 채움: 버튼 활성화 & 팁 보여주기 💡
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-slate-400');
+        submitBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+        submitBtn.innerText = originalBtnText;
+        
+        tipText.classList.remove('opacity-0', 'h-0');
+        tipText.classList.add('opacity-100', 'h-5'); // 팁 스르륵 등장
+
+      } else if (filledCount === totalCount) {
+        // [상태 C] 전부 채움: 버튼 활성화 & 팁 숨기기 (완벽하니까!)
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-slate-400');
+        submitBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+        submitBtn.innerText = originalBtnText;
+        
+        tipText.classList.remove('opacity-100', 'h-5');
+        tipText.classList.add('opacity-0', 'h-0'); // 팁 스르륵 퇴장
+      }
+    }
+
+    // 블록 삭제/추가 완벽 감지
+    const blocksContainer = document.getElementById('blocks-container');
+    if (blocksContainer) {
+        const observer = new MutationObserver(function(mutations) {
+            checkInputs(); // 블록이 날아가는 즉시 검사 재실행!
+        });
+        observer.observe(blocksContainer, { childList: true, subtree: true });
+    }
+
+    // 화면이 처음 켜졌을 때 초기 검사
+    checkInputs();
+
+    form.addEventListener('input', checkInputs);
+  });
 
 </script>
 {% endblock %}

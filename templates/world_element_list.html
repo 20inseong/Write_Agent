@@ -1,0 +1,393 @@
+{% extends "base.html" %}
+
+{% block title %}{{ category }} · {{ novel.title }} · 글쓰기 에이전트{% endblock %}
+
+{% block content %}
+<div class="flex h-[calc(100vh-3.5rem)] overflow-hidden bg-slate-50 relative">
+
+  <!-- 좌측 사이드바 (처음엔 w-0으로 닫혀있음) -->
+  <aside id="sidebar-drawer" class="w-0 border-r-0 bg-white border-slate-200 transition-all duration-300 overflow-hidden shrink-0">
+    <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50 w-64">
+      <span class="font-bold text-slate-700">세계관 관리</span>
+    </div>
+    <ul class="p-4 space-y-2 w-64">
+      <li>
+        <!-- 현재 카테고리에 맞는 새 설정 추가 버튼 -->
+        <button class="w-full text-left px-4 py-3 text-sm font-medium text-indigo-700 bg-indigo-50 rounded-xl hover:bg-indigo-100 flex items-center gap-3 transition">
+          <span class="text-lg">➕</span> 새 {{ category }} 추가
+        </button>
+      </li>
+    </ul>
+  </aside>
+
+  <!-- 우측 메인 영역 -->
+  <div class="flex-1 flex flex-col h-full relative w-full">
+    
+    <!-- 상단 바 -->
+    <header class="bg-white border-b border-slate-200 px-4 py-3 flex items-center gap-4 shrink-0 shadow-sm z-20">
+      <button id="btn-toggle-sidebar" class="text-slate-500 hover:text-slate-800 transition p-2 rounded-lg hover:bg-slate-100">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+      </button>
+      
+      <!-- 뒤로 가기 화살표 (2단계 카테고리 목록으로 이동) -->
+      <a href="{% url 'world_category' novel.id %}" class="text-slate-400 hover:text-indigo-600 transition p-1">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+      </a>
+
+      <!-- 경로 안내 (3단계 Depth 반영) -->
+      <nav class="text-sm font-semibold flex items-center gap-2">
+        <a href="{% url 'world_list' %}" class="text-slate-400 hover:text-slate-800 transition">내 프로젝트</a>
+        <span class="text-slate-300">/</span>
+        <a href="{% url 'world_category' novel.id %}" class="text-slate-400 hover:text-slate-800 transition">{{ novel.title }}</a>
+        <span class="text-slate-300">/</span>
+        <span class="text-indigo-700 font-bold">{{ category }}</span>
+      </nav>
+    </header>
+
+    <!-- 중앙 메인 뷰 (3단계: 설정 문서 리스트) -->
+    <main class="flex-1 overflow-y-auto p-6 md:p-8">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-slate-800">{{ category }} 설정</h2>
+        <!-- 빠른 추가 버튼 -->
+        <button id="btn-open-add-modal" class="px-4 py-2 bg-slate-800 text-white text-sm font-bold rounded-lg hover:bg-slate-700 transition">
+          + 새 {{ category }}
+        </button>
+      </div>
+      
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        
+        <!-- 파이썬에서 넘겨준 요소 데이터를 반복문으로 출력 -->
+        {% for element in elements %}
+        <a href="{% url 'world_element_detail' novel.id category element.id %}" 
+           class="element-card select-none text-left bg-white p-6 rounded-2xl border-2 border-slate-200 shadow-sm hover:shadow-md hover:border-indigo-400 transition group h-40 flex flex-col justify-between block"
+           style="-webkit-touch-callout: none;"
+           data-name="{{ element.name }}"
+           data-delete-url="{% url 'world_element_delete' novel.id category element.id %}">
+         <div>
+            <!-- 설정 제목 -->
+            <h3 class="text-lg font-bold text-slate-800 group-hover:text-indigo-600 transition">{{ element.name }}</h3>
+            <!-- 설정 요약 -->
+            <p class="mt-2 text-sm text-slate-500 line-clamp-2">{{ element.keyword_name|default:"내용이 없습니다." }}</p>
+          </div>
+          <!-- 자세히 보기 버튼 -->
+          <div class="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-lg self-end flex items-center gap-1 group-hover:bg-indigo-600 group-hover:text-white transition">
+            자세히 보기
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"></path></svg>
+          </div>
+        </a>
+        
+        <!-- 등록된 설정이 없을 경우 -->
+        {% empty %}
+        <div class="col-span-full py-12 text-center flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50">
+          <span class="text-4xl mb-3">📭</span>
+          <p class="text-slate-500 font-medium">아직 등록된 {{ category }} 설정이 없습니다.</p>
+          <p class="text-sm text-slate-400 mt-1">새로운 설정을 추가하여 세계관을 풍성하게 만들어보세요.</p>
+        </div>
+        {% endfor %}
+
+      </div>
+    </main>
+
+    <!-- 우측 하단 플로팅 고정 버튼 (블록 글쓰기) -->
+    <a href="{% url 'writer_setup' %}" class="absolute bottom-8 right-8 flex items-center justify-center w-14 h-14 bg-indigo-600 text-white rounded-full shadow-lg hover:bg-indigo-700 hover:scale-110 hover:shadow-xl transition-all duration-200 z-20 group">
+        <span class="text-2xl -ml-1">✍️</span>
+        <span class="absolute right-16 bg-slate-800 text-white text-xs font-medium px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none">
+          '{{ novel.title }}' 블록 글쓰기
+        </span>
+      </a>
+      <span class="text-2xl -ml-1">✍️</span>
+      <span class="absolute right-16 bg-slate-800 text-white text-xs font-medium px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none">
+        '{{ novel.title }}' 블록 글쓰기
+      </span>
+    </a>
+
+  </div>
+</div>
+<div id="add-element-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900 bg-opacity-50 transition-opacity p-4">
+    <!-- 💡 max-h-[90vh] 와 overflow-y-auto 로 내용이 길면 모달 안에서 스크롤되게 만듦 -->
+    <div class="bg-white w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl p-6 relative">
+      
+      <button id="btn-close-modal" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 z-10">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+  
+      <h3 class="text-xl font-bold text-slate-800 mb-6 border-b pb-3 sticky top-0 bg-white z-0">새 {{ category }} 상세 추가</h3>
+      
+      <form method="POST" action="">
+        {% csrf_token %}
+        
+        <div class="space-y-5">
+          <!-- 1. 공통 필수 항목 -->
+          <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+            <h4 class="text-sm font-bold text-indigo-600 mb-3">기본 정보 (필수)</h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-1">명칭 (객체 이름)</label>
+                <input type="text" name="name" required placeholder="예: 강무현" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+              </div>
+              <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-1">매칭 키워드</label>
+                <input type="text" name="keyword_name" required placeholder="예: 무현, 주인공" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+              </div>
+            </div>
+          </div>
+  
+          {% if category == '인물' %}
+            <div class="p-4 rounded-xl border border-slate-200 space-y-4">
+                <h4 class="text-sm font-bold text-slate-700 mb-2">인물 상세 설정 (전체)</h4>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">이명/별호</label>
+                    <input type="text" name="aliases" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg outline-none">
+                    </div>
+                    <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">생일 (자유 입력)</label>
+                    <input type="text" name="birthday" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg outline-none">
+                    </div>
+                    <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">주력 능력/스킬</label>
+                    <input type="text" name="main_skill" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg outline-none">
+                    </div>
+                    <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">현재 수준/경지</label>
+                    <input type="text" name="level" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg outline-none">
+                    </div>
+                    <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">사용 무기</label>
+                    <input type="text" name="weapon" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg outline-none">
+                    </div>
+                    <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">주요 복식</label>
+                    <input type="text" name="clothing" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">성격 (장/단점)</label>
+                    <textarea name="personality" rows="2" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg outline-none"></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">첫인상 및 신체적 특징</label>
+                    <textarea name="appearance" rows="2" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg outline-none"></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">궁극적인 욕망</label>
+                    <textarea name="desire" rows="2" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg outline-none"></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">금기 (절대 하지 않을 행동)</label>
+                    <textarea name="taboo" rows="2" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg outline-none"></textarea>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">우호 관계</label>
+                    <input type="text" name="allies" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg outline-none">
+                    </div>
+                    <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">적대 관계</label>
+                    <input type="text" name="enemies" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg outline-none">
+                    </div>
+                </div>
+            </div>
+            
+            {% elif category == '단체' %}
+            <div class="p-4 rounded-xl border border-slate-200 space-y-4">
+                <h4 class="text-sm font-bold text-slate-700 mb-2">단체 상세 설정 (전체)</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">세력 성향</label>
+                    <input type="text" name="alignment" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg outline-none">
+                    </div>
+                    <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">본거지 위치</label>
+                    <input type="text" name="base_location" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">이념 및 창립 목적</label>
+                    <textarea name="ideology" rows="2" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg outline-none"></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">구조 및 위계 (수장, 서열)</label>
+                    <textarea name="hierarchy" rows="2" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg outline-none"></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">핵심 소속 인물</label>
+                    <textarea name="key_members" rows="2" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg outline-none"></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">고유 기술, 자산 및 세력 규모</label>
+                    <textarea name="assets" rows="2" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg outline-none"></textarea>
+                </div>
+            </div>
+
+            {% elif category == '물건' %}
+            <div class="p-4 rounded-xl border border-slate-200 space-y-4">
+                <h4 class="text-sm font-bold text-slate-700 mb-2">물건 상세 설정 (전체)</h4>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">분류</label>
+                    <input type="text" name="item_type" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">외형 및 특유의 기운</label>
+                    <textarea name="appearance" rows="2" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg outline-none"></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">효과 및 이점</label>
+                    <textarea name="effect" rows="2" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg outline-none"></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">제약, 획득 조건 및 부작용</label>
+                    <textarea name="penalty" rows="2" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg outline-none"></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">기원 및 이전 주인의 이야기</label>
+                    <textarea name="origin" rows="2" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg outline-none"></textarea>
+                </div>
+            </div>
+
+            {% elif category == '장소' %}
+            <div class="p-4 rounded-xl border border-slate-200 space-y-4">
+                <h4 class="text-sm font-bold text-slate-700 mb-2">장소 상세 설정 (전체)</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">소속 지역</label>
+                    <input type="text" name="region" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg outline-none">
+                    </div>
+                    <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">지배 세력 또는 통치자</label>
+                    <input type="text" name="ruler" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">환경, 기후 및 지형적 특징</label>
+                    <textarea name="climate" rows="2" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg outline-none"></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">스토리적 상징성 (랜드마크)</label>
+                    <textarea name="significance" rows="2" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg outline-none"></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">장소에 얽힌 숨겨진 역사</label>
+                    <textarea name="hidden_history" rows="2" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg outline-none"></textarea>
+                </div>
+            </div>
+
+            {% elif category == '사건' %}
+            <div class="p-4 rounded-xl border border-slate-200 space-y-4">
+                <h4 class="text-sm font-bold text-slate-700 mb-2">사건 상세 설정 (전체)</h4>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">발생 시점</label>
+                    <input type="text" name="timeline" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">관련 주체 (인물 및 단체)</label>
+                    <input type="text" name="participants" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">발발 원인 및 전개 흐름</label>
+                    <textarea name="trigger" rows="2" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg outline-none"></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">세계관에 미친 파급력 및 결과</label>
+                    <textarea name="impact" rows="2" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg outline-none"></textarea>
+                </div>
+            </div>
+            {% endif %}
+  
+        </div>
+  
+        <div class="mt-6 flex justify-end gap-3 pt-4 border-t sticky bottom-0 bg-white">
+          <button type="button" id="btn-cancel-modal" class="px-5 py-2.5 text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 transition font-bold">취소</button>
+          <button type="submit" class="px-5 py-2.5 text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition font-bold shadow-md">추가하기</button>
+        </div>
+      </form>   
+    </div>
+  </div>
+
+  <div id="custom-context-menu" class="hidden absolute z-50 w-48 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden text-sm">
+    <!-- 나중에 수정, 복제 등 다른 기능도 여기에 <li>처럼 추가 가능 -->
+    <form id="delete-form" method="POST" action="">
+      {% csrf_token %}
+      <button type="submit" class="w-full text-left px-4 py-3 text-red-600 hover:bg-red-50 flex items-center gap-3 transition font-medium">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+        <span id="delete-target-name">삭제하기</span>
+      </button>
+    </form>
+  </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const sidebar = document.getElementById('sidebar-drawer');
+    const toggleBtn = document.getElementById('btn-toggle-sidebar');
+
+    toggleBtn.addEventListener('click', function() {
+      if (sidebar.classList.contains('w-64')) {
+        sidebar.classList.remove('w-64');
+        sidebar.classList.add('w-0', 'border-r-0');
+      } else {
+        sidebar.classList.add('w-64');
+        sidebar.classList.remove('w-0', 'border-r-0');
+      }
+    });
+
+    const modal = document.getElementById('add-element-modal');
+    const openBtn = document.getElementById('btn-open-add-modal'); // 💡 메인 버튼 ID로 정확히 지정
+    const closeBtn = document.getElementById('btn-close-modal');
+    const cancelBtn = document.getElementById('btn-cancel-modal');
+
+    // 메인 버튼을 누르면 열림
+    if (openBtn) {
+      openBtn.addEventListener('click', () => modal.classList.remove('hidden'));
+    }
+
+    // 닫기/취소 버튼 클릭 시 닫힘
+    if (closeBtn) closeBtn.addEventListener('click', () => modal.classList.add('hidden'));
+    if (cancelBtn) cancelBtn.addEventListener('click', () => modal.classList.add('hidden'));
+    
+    // 모달 바깥쪽 배경 클릭 시 닫힘
+    window.addEventListener('click', (e) => {
+      if (e.target === modal) modal.classList.add('hidden');
+    });
+
+    // ==========================================
+    // 우클릭(길게 누르기) 컨텍스트 메뉴 스크립트
+    // ==========================================
+    const contextMenu = document.getElementById('custom-context-menu');
+    const deleteForm = document.getElementById('delete-form');
+    const deleteTargetName = document.getElementById('delete-target-name');
+    const cards = document.querySelectorAll('.element-card');
+
+    cards.forEach(card => {
+      card.addEventListener('contextmenu', function(e) {
+        e.preventDefault(); // 브라우저 기본 우클릭 메뉴 방지
+        
+        // 카드에 심어둔 정보 가져오기
+        const deleteUrl = this.getAttribute('data-delete-url');
+        const elementName = this.getAttribute('data-name');
+        
+        // 폼 액션과 메뉴 텍스트를 현재 카드에 맞게 변경
+        deleteForm.action = deleteUrl;
+        deleteTargetName.innerText = `'${elementName}' 삭제`;
+        
+        // 마우스(또는 터치) 위치에 맞게 메뉴 띄우기
+        contextMenu.style.left = `${e.pageX}px`;
+        contextMenu.style.top = `${e.pageY}px`;
+        contextMenu.classList.remove('hidden');
+      });
+    });
+
+    // 화면의 다른 곳을 클릭하면 열려있던 메뉴 숨기기
+    window.addEventListener('click', (e) => {
+      if (!contextMenu.contains(e.target)) {
+        contextMenu.classList.add('hidden');
+      }
+    });
+    
+  });
+
+</script>
+{% endblock %}

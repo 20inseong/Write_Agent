@@ -1,31 +1,89 @@
 {% extends "base.html" %}
 
-{% block title %}작업실 · 글쓰기 에이전트{% endblock %}
+{% block title %}작업실 대시보드 · 글쓰기 에이전트{% endblock %}
 
 {% block content %}
-<main class="flex min-h-[calc(100vh-3.5rem)] flex-col items-center justify-center px-4 py-12">
-  <h1 class="mb-12 text-2xl font-semibold tracking-tight text-slate-700">글쓰기 에이전트</h1>
+<main class="flex min-h-[calc(100vh-3.5rem)] flex-col items-center justify-center px-4 py-12 bg-slate-50">
+  
+  <div class="mb-10 text-center">
+    <h1 class="text-3xl font-bold tracking-tight text-slate-800">나만의 창작 작업실</h1>
+    <p class="mt-2 text-sm text-slate-500">오늘은 어떤 이야기를 써볼까요?</p>
+  </div>
+
   <nav class="flex w-full max-w-md flex-col gap-4">
+    
+    <!-- 1. 글 이어쓰기 (기본 상태: 비활성화 회색톤) -->
     <button
-      type="button"
+      id="btn-continue-writing"
       disabled
-      class="w-full rounded-2xl border border-slate-200 bg-white px-8 py-6 text-lg font-medium text-slate-400 shadow-sm"
+      class="group flex w-full flex-col items-center justify-center rounded-2xl border-2 border-slate-200 bg-slate-50 px-8 py-5 text-slate-400 shadow-sm transition cursor-not-allowed"
     >
-      소설 DB 구축
+      <span class="text-lg font-semibold">최근 작업 이어쓰기</span>
+      <span id="continue-title" class="mt-1 text-sm font-medium text-slate-400">저장된 임시 원고가 없습니다.</span>
     </button>
+
+    <!-- 2. 세계관 연동 창작 -->
     <a
-      href="{% url 'writer_setup' %}"
-      class="w-full rounded-2xl border border-indigo-200 bg-indigo-600 px-8 py-6 text-center text-lg font-semibold text-white shadow-md transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+      href="{% url 'world_list' %}"
+      class="flex w-full flex-col items-center justify-center rounded-2xl border border-indigo-200 bg-indigo-600 px-8 py-5 text-white shadow-md transition hover:bg-indigo-700 hover:shadow-lg"
     >
-      소설 작성
+      <span class="text-lg font-semibold">세계관 연동 창작</span>
+      <span class="mt-1 text-sm text-indigo-200">DB 데이터를 활용하여 정교하게 글을 씁니다.</span>
     </a>
+
+    <!-- 3. 자유 스케치 -->
+    <a
+      href="{% url 'writer_setup' %}?mode=random"
+      class="flex w-full flex-col items-center justify-center rounded-2xl border border-slate-300 bg-white px-8 py-5 text-slate-700 shadow-sm transition hover:border-slate-400 hover:bg-slate-50"
+    >
+      <span class="text-lg font-semibold">자유 스케치 시작하기</span>
+      <span class="mt-1 text-sm text-slate-400">사전 설정 없이 가볍게 빈 캔버스에서 시작합니다.</span>
+    </a>
+
+    <!-- 4. 환경 설정 -->
     <button
       type="button"
-      disabled
-      class="w-full rounded-2xl border border-slate-200 bg-white px-8 py-6 text-lg font-medium text-slate-400 shadow-sm"
+      class="mt-4 flex w-full items-center justify-center rounded-2xl border border-slate-200 bg-transparent px-8 py-4 text-slate-500 transition hover:bg-slate-200 hover:text-slate-700"
     >
-      설정
+      <span class="text-base font-medium">환경 설정</span>
     </button>
+
   </nav>
 </main>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const continueBtn = document.getElementById("btn-continue-writing");
+    const continueTitle = document.getElementById("continue-title");
+    
+    // 로컬 스토리지 데이터 확인
+    const savedDraft = localStorage.getItem("draft_content");
+    const savedTitle = localStorage.getItem("draft_title");
+
+    // 저장된 원고가 있을 경우에만 버튼 활성화
+    if (savedDraft) {
+      // 비활성화 속성 제거 및 커서 변경
+      continueBtn.removeAttribute("disabled");
+      
+      // 회색 톤 디자인을 활성화된 녹색(Emerald) 톤으로 교체
+      continueBtn.className = "group flex w-full flex-col items-center justify-center rounded-2xl border-2 border-emerald-500 bg-emerald-50 px-8 py-5 text-emerald-700 shadow-sm transition hover:bg-emerald-500 hover:text-white cursor-pointer";
+      
+      // 텍스트 색상 및 내용 업데이트
+      continueTitle.className = "mt-1 text-sm font-medium text-emerald-600 group-hover:text-emerald-100";
+      
+      if (savedTitle) {
+        continueTitle.textContent = `[${savedTitle}] 원고 복구하기`;
+      } else {
+        continueTitle.textContent = `[가제 소설] 원고 복구하기`;
+      }
+      
+      // 클릭 이벤트 추가
+      continueBtn.addEventListener("click", function() {
+        alert("저장된 원고로 이동하는 기능은 라우팅 완료 후 연결됩니다!"); 
+      });
+    }
+  });
+</script>
 {% endblock %}

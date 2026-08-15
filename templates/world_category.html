@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}{{ novel.title }} 카테고리 · 글쓰기 에이전트{% endblock %}
+
+{% block content %}
+<div class="flex h-[calc(100vh-3.5rem)] overflow-hidden bg-slate-50 relative">
+
+  <!-- 좌측 사이드바 (처음엔 w-0으로 닫혀있음) -->
+  <aside id="sidebar-drawer" class="w-0 border-r-0 bg-white border-slate-200 transition-all duration-300 overflow-hidden shrink-0">
+    <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50 w-64">
+      <span class="font-bold text-slate-700">세계관 관리</span>
+    </div>
+    <ul class="p-4 space-y-2 w-64">
+      <li>
+        <button class="w-full text-left px-4 py-3 text-sm font-medium text-slate-700 rounded-xl hover:bg-slate-100 flex items-center gap-3 transition">
+          <span class="text-lg">➕</span> 새 설정 추가
+        </button>
+      </li>
+    </ul>
+  </aside>
+
+  <!-- 우측 메인 영역 -->
+  <div class="flex-1 flex flex-col h-full relative w-full">
+    
+    <!-- 상단 바 -->
+    <header class="bg-white border-b border-slate-200 px-4 py-3 flex items-center gap-4 shrink-0 shadow-sm z-20">
+      <button id="btn-toggle-sidebar" class="text-slate-500 hover:text-slate-800 transition p-2 rounded-lg hover:bg-slate-100">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+      </button>
+      
+      <!-- 뒤로 가기 화살표 (1단계 세계관 목록으로 이동) -->
+      <a href="{% url 'world_list' %}" class="text-slate-400 hover:text-indigo-600 transition p-1">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+      </a>
+
+      <!-- 경로 안내 -->
+      <nav class="text-sm font-semibold flex items-center gap-2">
+        <a href="{% url 'world_list' %}" class="text-slate-400 hover:text-slate-800 transition">내 프로젝트</a>
+        <span class="text-slate-300">/</span>
+        <span class="text-indigo-700 font-bold">{{ novel.title }}</span>
+      </nav>
+    </header>
+
+    <!-- 중앙 메인 뷰 (2단계: 5대 카테고리) -->
+    <main class="flex-1 overflow-y-auto p-6 md:p-8">
+        <h2 class="text-2xl font-bold text-slate-800 mb-6">설정</h2>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          
+          <!-- 1. 인물 -->
+          <a href="{% url 'world_element_list' novel.id '인물' %}" class="flex items-center gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-indigo-400 transition group">
+            <div class="flex items-center justify-center w-14 h-14 bg-slate-50 group-hover:bg-indigo-50 rounded-xl text-2xl transition">
+              👤
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-slate-800 group-hover:text-indigo-600 transition">인물</h3>
+              <p class="text-xs text-slate-500 mt-1">등장인물, 가문, 종족 설정</p>
+            </div>
+          </a>
+  
+          <!-- 2. 단체 -->
+          <a href="{% url 'world_element_list' novel.id '단체' %}" class="flex items-center gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-indigo-400 transition group">
+            <div class="flex items-center justify-center w-14 h-14 bg-slate-50 group-hover:bg-indigo-50 rounded-xl text-2xl transition">
+              🛡️
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-slate-800 group-hover:text-indigo-600 transition">단체</h3>
+              <p class="text-xs text-slate-500 mt-1">문파, 세력, 길드, 조직</p>
+            </div>
+          </a>
+  
+          <!-- 3. 물건 -->
+          <a href="{% url 'world_element_list' novel.id '물건' %}" class="flex items-center gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-indigo-400 transition group">
+            <div class="flex items-center justify-center w-14 h-14 bg-slate-50 group-hover:bg-indigo-50 rounded-xl text-2xl transition">
+              ⚔️
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-slate-800 group-hover:text-indigo-600 transition">물건</h3>
+              <p class="text-xs text-slate-500 mt-1">무기, 아티팩트, 주요 아이템</p>
+            </div>
+          </a>
+  
+          <!-- 4. 장소 -->
+          <a href="{% url 'world_element_list' novel.id '장소' %}" class="flex items-center gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-indigo-400 transition group">
+            <div class="flex items-center justify-center w-14 h-14 bg-slate-50 group-hover:bg-indigo-50 rounded-xl text-2xl transition">
+              🗺️
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-slate-800 group-hover:text-indigo-600 transition">장소</h3>
+              <p class="text-xs text-slate-500 mt-1">지역, 국가, 던전, 주요 배경</p>
+            </div>
+          </a>
+  
+          <!-- 5. 사건 -->
+          <a href="{% url 'world_element_list' novel.id '사건' %}" class="flex items-center gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-indigo-400 transition group">
+            <div class="flex items-center justify-center w-14 h-14 bg-slate-50 group-hover:bg-indigo-50 rounded-xl text-2xl transition">
+              📜
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-slate-800 group-hover:text-indigo-600 transition">사건</h3>
+              <p class="text-xs text-slate-500 mt-1">역사적 사건, 연표, 퀘스트</p>
+            </div>
+          </a>
+
+          <!--- 6. 프로젝트 설정 -->
+          <a href="{% url 'novel_settings' novel.id %}" class="flex items-center gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-indigo-400 transition group">
+            <div class="flex items-center justify-center w-14 h-14 bg-slate-50 group-hover:bg-indigo-50 rounded-xl text-2xl transition">
+              ⚙️
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-slate-800 group-hover:text-indigo-600 transition">프로젝트 설정</h3>
+              <p class="text-xs text-slate-500 mt-1">소설 제목 및 로그라인(소개) 수정</p>
+            </div>
+          </a>
+  
+        </div>
+      </main>
+
+    <!-- 우측 하단 플로팅 고정 버튼 -->
+    <a href="{% url 'writer_setup' %}" class="absolute bottom-8 right-8 flex items-center justify-center w-14 h-14 bg-indigo-600 text-white rounded-full shadow-lg hover:bg-indigo-700 hover:scale-110 hover:shadow-xl transition-all duration-200 z-20 group">
+        <span class="text-2xl -ml-1">✍️</span>
+        <span class="absolute right-16 bg-slate-800 text-white text-xs font-medium px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none">
+          '{{ novel.title }}' 블록 글쓰기
+        </span>
+      </a>
+      <span class="text-2xl -ml-1">✍️</span>
+      <span class="absolute right-16 bg-slate-800 text-white text-xs font-medium px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none">
+        '{{ novel.title }}' 블록 글쓰기
+      </span>
+    </a>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const sidebar = document.getElementById('sidebar-drawer');
+    const toggleBtn = document.getElementById('btn-toggle-sidebar');
+
+    toggleBtn.addEventListener('click', function() {
+      if (sidebar.classList.contains('w-64')) {
+        sidebar.classList.remove('w-64');
+        sidebar.classList.add('w-0', 'border-r-0');
+      } else {
+        sidebar.classList.add('w-64');
+        sidebar.classList.remove('w-0', 'border-r-0');
+      }
+    });
+  });
+</script>
+{% endblock %}

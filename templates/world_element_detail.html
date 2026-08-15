@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}{{ element.name }} · {{ novel.title }} · 글쓰기 에이전트{% endblock %}
+
+{% block content %}
+<div class="flex h-[calc(100vh-3.5rem)] bg-slate-50 relative">
+
+  <div class="flex-1 flex flex-col h-full w-full">
+    
+    <!-- 상단 바 -->
+    <header class="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between shrink-0 shadow-sm z-20">
+      <div class="flex items-center gap-4">
+        <a href="{% url 'world_element_list' novel.id category %}" class="text-slate-400 hover:text-indigo-600 transition p-1">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+        </a>
+        <nav class="text-sm font-semibold flex items-center gap-2">
+          <a href="{% url 'world_list' %}" class="text-slate-400 hover:text-slate-800 transition">내 프로젝트</a><span class="text-slate-300">/</span>
+          <a href="{% url 'world_category' novel.id %}" class="text-slate-400 hover:text-slate-800 transition">{{ novel.title }}</a><span class="text-slate-300">/</span>
+          <a href="{% url 'world_element_list' novel.id category %}" class="text-slate-400 hover:text-slate-800 transition">{{ category }}</a><span class="text-slate-300">/</span>
+          <span class="text-indigo-700 font-bold view-mode">{{ element.name }}</span>
+          <span class="text-indigo-700 font-bold edit-mode hidden">설정 수정 중...</span>
+        </nav>
+      </div>
+
+      <!-- 💡 수정/저장 전환 버튼 (form="edit-form" 속성으로 바깥에서도 폼 제출 가능) -->
+      <div class="flex items-center gap-2">
+        <button type="button" id="btn-edit-toggle" form="edit-form" class="px-4 py-2 text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition">수정하기</button>
+      </div>
+    </header>
+
+    <!-- 중앙 메인 뷰 -->
+    <main class="flex-1 overflow-y-auto p-8 md:p-12 lg:px-32 flex justify-center">
+      <!-- 💡 폼 태그로 전체를 감쌈 -->
+      <form method="POST" id="edit-form" class="w-full max-w-4xl bg-white p-10 rounded-2xl shadow-sm border border-slate-200">
+        {% csrf_token %}
+        
+        <!-- 헤더 영역 -->
+        <div class="border-b border-slate-100 pb-8 mb-8">
+          <div class="inline-block px-3 py-1 mb-4 text-xs font-bold text-indigo-700 bg-indigo-50 rounded-full">
+            {{ element.get_category_display }}
+          </div>
+          
+          <!-- 이름 -->
+          <h1 class="text-4xl font-extrabold text-slate-900 mb-4 view-mode">{{ element.name }}</h1>
+          <input type="text" name="name" value="{{ element.name }}" class="text-4xl font-extrabold text-slate-900 mb-4 w-full border-b-2 border-indigo-200 focus:border-indigo-500 outline-none pb-1 edit-mode hidden bg-slate-50 px-2 rounded-t-lg">
+          
+          <!-- 키워드 -->
+          <div class="flex items-center gap-2 text-sm text-slate-500">
+            <span class="font-semibold text-slate-700">매칭 키워드:</span>
+            <span class="view-mode">{{ element.keyword_name }}</span>
+            <input type="text" name="keyword_name" value="{{ element.keyword_name }}" class="edit-mode hidden w-full max-w-md px-2 py-1 border border-slate-300 rounded focus:ring-1 focus:ring-indigo-500 outline-none text-slate-800">
+          </div>
+        </div>
+
+        <div class="space-y-8 text-slate-700">
+          
+          {% if element.category == 'CHARACTER' %}
+          <!-- 1. 인물 데이터 -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 p-6 rounded-xl border border-slate-100">
+            <div><span class="block text-xs font-bold text-slate-400 mb-1">이명/별호</span><p class="font-medium view-mode">{{ detail.aliases|default:"-" }}</p><input type="text" name="aliases" value="{{ detail.aliases }}" class="edit-mode hidden w-full px-2 py-1 text-sm border rounded"></div>
+            <div><span class="block text-xs font-bold text-slate-400 mb-1">생일</span><p class="font-medium view-mode">{{ detail.birthday|default:"-" }}</p><input type="text" name="birthday" value="{{ detail.birthday }}" class="edit-mode hidden w-full px-2 py-1 text-sm border rounded"></div>
+            <div><span class="block text-xs font-bold text-slate-400 mb-1">주력 능력/스킬</span><p class="font-medium view-mode">{{ detail.main_skill|default:"-" }}</p><input type="text" name="main_skill" value="{{ detail.main_skill }}" class="edit-mode hidden w-full px-2 py-1 text-sm border rounded"></div>
+            <div><span class="block text-xs font-bold text-slate-400 mb-1">현재 수준/경지</span><p class="font-medium view-mode">{{ detail.level|default:"-" }}</p><input type="text" name="level" value="{{ detail.level }}" class="edit-mode hidden w-full px-2 py-1 text-sm border rounded"></div>
+            <div><span class="block text-xs font-bold text-slate-400 mb-1">사용 무기</span><p class="font-medium view-mode">{{ detail.weapon|default:"-" }}</p><input type="text" name="weapon" value="{{ detail.weapon }}" class="edit-mode hidden w-full px-2 py-1 text-sm border rounded"></div>
+            <div><span class="block text-xs font-bold text-slate-400 mb-1">주요 복식</span><p class="font-medium view-mode">{{ detail.clothing|default:"-" }}</p><input type="text" name="clothing" value="{{ detail.clothing }}" class="edit-mode hidden w-full px-2 py-1 text-sm border rounded"></div>
+          </div>
+
+          <div><h3 class="text-lg font-bold text-slate-800 mb-2 border-l-4 border-indigo-500 pl-3">성격 및 가치관</h3><p class="whitespace-pre-wrap leading-relaxed view-mode">{{ detail.personality|default:"설정된 내용이 없습니다." }}</p><textarea name="personality" rows="3" class="edit-mode hidden w-full p-3 border rounded-lg">{{ detail.personality }}</textarea></div>
+          <div><h3 class="text-lg font-bold text-slate-800 mb-2 border-l-4 border-indigo-500 pl-3">궁극적인 욕망</h3><p class="whitespace-pre-wrap leading-relaxed view-mode">{{ detail.desire|default:"설정된 내용이 없습니다." }}</p><textarea name="desire" rows="3" class="edit-mode hidden w-full p-3 border rounded-lg">{{ detail.desire }}</textarea></div>
+          <div><h3 class="text-lg font-bold text-slate-800 mb-2 border-l-4 border-indigo-500 pl-3">외형 및 특징</h3><p class="whitespace-pre-wrap leading-relaxed view-mode">{{ detail.appearance|default:"설정된 내용이 없습니다." }}</p><textarea name="appearance" rows="3" class="edit-mode hidden w-full p-3 border rounded-lg">{{ detail.appearance }}</textarea></div>
+          <div><h3 class="text-lg font-bold text-slate-800 mb-2 border-l-4 border-rose-500 pl-3">금기 (절대 하지 않을 행동)</h3><p class="whitespace-pre-wrap leading-relaxed view-mode">{{ detail.taboo|default:"설정된 내용이 없습니다." }}</p><textarea name="taboo" rows="2" class="edit-mode hidden w-full p-3 border rounded-lg">{{ detail.taboo }}</textarea></div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4 border-t border-slate-100">
+            <div><h3 class="text-lg font-bold text-slate-800 mb-2 border-l-4 border-emerald-500 pl-3">우호 관계</h3><p class="whitespace-pre-wrap leading-relaxed view-mode">{{ detail.allies|default:"-" }}</p><textarea name="allies" rows="2" class="edit-mode hidden w-full p-3 border rounded-lg">{{ detail.allies }}</textarea></div>
+            <div><h3 class="text-lg font-bold text-slate-800 mb-2 border-l-4 border-red-500 pl-3">적대 관계</h3><p class="whitespace-pre-wrap leading-relaxed view-mode">{{ detail.enemies|default:"-" }}</p><textarea name="enemies" rows="2" class="edit-mode hidden w-full p-3 border rounded-lg">{{ detail.enemies }}</textarea></div>
+          </div>
+
+          {% elif element.category == 'FACTION' %}
+          <!-- 2. 단체 데이터 -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 p-6 rounded-xl border border-slate-100">
+            <div><span class="block text-xs font-bold text-slate-400 mb-1">세력 성향</span><p class="font-medium view-mode">{{ detail.alignment|default:"-" }}</p><input type="text" name="alignment" value="{{ detail.alignment }}" class="edit-mode hidden w-full px-2 py-1 text-sm border rounded"></div>
+            <div><span class="block text-xs font-bold text-slate-400 mb-1">본거지 위치</span><p class="font-medium view-mode">{{ detail.base_location|default:"-" }}</p><input type="text" name="base_location" value="{{ detail.base_location }}" class="edit-mode hidden w-full px-2 py-1 text-sm border rounded"></div>
+          </div>
+          <div><h3 class="text-lg font-bold text-slate-800 mb-2 border-l-4 border-blue-500 pl-3">이념 및 창립 목적</h3><p class="whitespace-pre-wrap leading-relaxed view-mode">{{ detail.ideology|default:"설정된 내용이 없습니다." }}</p><textarea name="ideology" rows="3" class="edit-mode hidden w-full p-3 border rounded-lg">{{ detail.ideology }}</textarea></div>
+          <div><h3 class="text-lg font-bold text-slate-800 mb-2 border-l-4 border-blue-500 pl-3">구조 및 위계</h3><p class="whitespace-pre-wrap leading-relaxed view-mode">{{ detail.hierarchy|default:"설정된 내용이 없습니다." }}</p><textarea name="hierarchy" rows="3" class="edit-mode hidden w-full p-3 border rounded-lg">{{ detail.hierarchy }}</textarea></div>
+          <div><h3 class="text-lg font-bold text-slate-800 mb-2 border-l-4 border-blue-500 pl-3">핵심 소속 인물</h3><p class="whitespace-pre-wrap leading-relaxed view-mode">{{ detail.key_members|default:"설정된 내용이 없습니다." }}</p><textarea name="key_members" rows="3" class="edit-mode hidden w-full p-3 border rounded-lg">{{ detail.key_members }}</textarea></div>
+          <div><h3 class="text-lg font-bold text-slate-800 mb-2 border-l-4 border-blue-500 pl-3">고유 기술, 자산 및 세력 규모</h3><p class="whitespace-pre-wrap leading-relaxed view-mode">{{ detail.assets|default:"설정된 내용이 없습니다." }}</p><textarea name="assets" rows="3" class="edit-mode hidden w-full p-3 border rounded-lg">{{ detail.assets }}</textarea></div>
+
+          {% elif element.category == 'ITEM' %}
+          <!-- 3. 물건 데이터 -->
+          <div class="bg-slate-50 p-6 rounded-xl border border-slate-100 mb-6">
+            <span class="block text-xs font-bold text-slate-400 mb-1">분류</span><p class="font-medium view-mode">{{ detail.item_type|default:"-" }}</p><input type="text" name="item_type" value="{{ detail.item_type }}" class="edit-mode hidden w-full px-2 py-1 text-sm border rounded">
+          </div>
+          <div><h3 class="text-lg font-bold text-slate-800 mb-2 border-l-4 border-amber-500 pl-3">외형 및 특유의 기운</h3><p class="whitespace-pre-wrap leading-relaxed view-mode">{{ detail.appearance|default:"설정된 내용이 없습니다." }}</p><textarea name="appearance" rows="3" class="edit-mode hidden w-full p-3 border rounded-lg">{{ detail.appearance }}</textarea></div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4 border-t border-slate-100">
+            <div><h3 class="text-lg font-bold text-slate-800 mb-2 border-l-4 border-emerald-500 pl-3">효과 및 이점</h3><p class="whitespace-pre-wrap leading-relaxed view-mode">{{ detail.effect|default:"설정된 내용이 없습니다." }}</p><textarea name="effect" rows="3" class="edit-mode hidden w-full p-3 border rounded-lg">{{ detail.effect }}</textarea></div>
+            <div><h3 class="text-lg font-bold text-slate-800 mb-2 border-l-4 border-red-500 pl-3">제약, 획득 조건 및 부작용</h3><p class="whitespace-pre-wrap leading-relaxed view-mode">{{ detail.penalty|default:"설정된 내용이 없습니다." }}</p><textarea name="penalty" rows="3" class="edit-mode hidden w-full p-3 border rounded-lg">{{ detail.penalty }}</textarea></div>
+          </div>
+          <div><h3 class="text-lg font-bold text-slate-800 mb-2 border-l-4 border-amber-500 pl-3">기원 및 이전 주인의 이야기</h3><p class="whitespace-pre-wrap leading-relaxed view-mode">{{ detail.origin|default:"설정된 내용이 없습니다." }}</p><textarea name="origin" rows="3" class="edit-mode hidden w-full p-3 border rounded-lg">{{ detail.origin }}</textarea></div>
+
+          {% elif element.category == 'LOCATION' %}
+          <!-- 4. 장소 데이터 -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 p-6 rounded-xl border border-slate-100">
+            <div><span class="block text-xs font-bold text-slate-400 mb-1">소속 지역</span><p class="font-medium view-mode">{{ detail.region|default:"-" }}</p><input type="text" name="region" value="{{ detail.region }}" class="edit-mode hidden w-full px-2 py-1 text-sm border rounded"></div>
+            <div><span class="block text-xs font-bold text-slate-400 mb-1">지배 세력 또는 통치자</span><p class="font-medium view-mode">{{ detail.ruler|default:"-" }}</p><input type="text" name="ruler" value="{{ detail.ruler }}" class="edit-mode hidden w-full px-2 py-1 text-sm border rounded"></div>
+          </div>
+          <div><h3 class="text-lg font-bold text-slate-800 mb-2 border-l-4 border-emerald-600 pl-3">환경, 기후 및 지형적 특징</h3><p class="whitespace-pre-wrap leading-relaxed view-mode">{{ detail.climate|default:"설정된 내용이 없습니다." }}</p><textarea name="climate" rows="3" class="edit-mode hidden w-full p-3 border rounded-lg">{{ detail.climate }}</textarea></div>
+          <div><h3 class="text-lg font-bold text-slate-800 mb-2 border-l-4 border-emerald-600 pl-3">스토리적 상징성</h3><p class="whitespace-pre-wrap leading-relaxed view-mode">{{ detail.significance|default:"설정된 내용이 없습니다." }}</p><textarea name="significance" rows="3" class="edit-mode hidden w-full p-3 border rounded-lg">{{ detail.significance }}</textarea></div>
+          <div><h3 class="text-lg font-bold text-slate-800 mb-2 border-l-4 border-emerald-600 pl-3">장소에 얽힌 숨겨진 역사</h3><p class="whitespace-pre-wrap leading-relaxed view-mode">{{ detail.hidden_history|default:"설정된 내용이 없습니다." }}</p><textarea name="hidden_history" rows="3" class="edit-mode hidden w-full p-3 border rounded-lg">{{ detail.hidden_history }}</textarea></div>
+
+          {% elif element.category == 'EVENT' %}
+          <!-- 5. 사건 데이터 -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 p-6 rounded-xl border border-slate-100">
+            <div><span class="block text-xs font-bold text-slate-400 mb-1">발생 시점</span><p class="font-medium view-mode">{{ detail.timeline|default:"-" }}</p><input type="text" name="timeline" value="{{ detail.timeline }}" class="edit-mode hidden w-full px-2 py-1 text-sm border rounded"></div>
+            <div><span class="block text-xs font-bold text-slate-400 mb-1">관련 주체 (인물/단체)</span><p class="font-medium view-mode">{{ detail.participants|default:"-" }}</p><input type="text" name="participants" value="{{ detail.participants }}" class="edit-mode hidden w-full px-2 py-1 text-sm border rounded"></div>
+          </div>
+          <div><h3 class="text-lg font-bold text-slate-800 mb-2 border-l-4 border-purple-500 pl-3">발발 원인 및 전개 흐름</h3><p class="whitespace-pre-wrap leading-relaxed view-mode">{{ detail.trigger|default:"설정된 내용이 없습니다." }}</p><textarea name="trigger" rows="3" class="edit-mode hidden w-full p-3 border rounded-lg">{{ detail.trigger }}</textarea></div>
+          <div><h3 class="text-lg font-bold text-slate-800 mb-2 border-l-4 border-purple-500 pl-3">세계관에 미친 파급력</h3><p class="whitespace-pre-wrap leading-relaxed view-mode">{{ detail.impact|default:"설정된 내용이 없습니다." }}</p><textarea name="impact" rows="3" class="edit-mode hidden w-full p-3 border rounded-lg">{{ detail.impact }}</textarea></div>
+          {% endif %}
+
+        </div>
+      </form>
+    </main>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const toggleBtn = document.getElementById('btn-edit-toggle');
+    
+    toggleBtn.addEventListener('click', function(e) {
+      // 1. 버튼이 '수정하기' 일 때 누르면 에디터 모드로 변환
+      if (toggleBtn.innerText === '수정하기') {
+        e.preventDefault(); // 기본 제출 방지
+        
+        // 뷰 모드 숨기고, 에디트 모드 보이기
+        document.querySelectorAll('.view-mode').forEach(el => el.classList.add('hidden'));
+        document.querySelectorAll('.edit-mode').forEach(el => el.classList.remove('hidden'));
+        
+        // 버튼 디자인을 '저장하기' (강조색)으로 변경
+        toggleBtn.innerText = '저장하기';
+        toggleBtn.type = 'submit'; // 다음 번 누를 땐 폼이 제출되도록 타입 변경
+        toggleBtn.classList.remove('bg-slate-100', 'text-slate-600', 'hover:bg-slate-200');
+        toggleBtn.classList.add('bg-indigo-600', 'text-white', 'hover:bg-indigo-700', 'shadow-md');
+      }
+      // 2. 버튼이 '저장하기' 일 때 누르면 기본 동작(submit) 작동하여 저장됨
+    });
+  });
+</script>
+{% endblock %}
