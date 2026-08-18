@@ -142,7 +142,7 @@
     </main>
 
     <!-- 우측 하단 플로팅 고정 버튼 (블록 글쓰기) -->
-    <a href="{% url 'writer_setup' %}" class="absolute bottom-8 right-8 flex items-center justify-center w-14 h-14 bg-indigo-600 text-white rounded-full shadow-lg hover:bg-indigo-700 hover:scale-110 hover:shadow-xl transition-all duration-200 z-20 group">
+    <a href="{% url 'writer_setup_with_id' novel.id %}" class="absolute bottom-8 right-8 flex items-center justify-center w-14 h-14 bg-indigo-600 text-white rounded-full shadow-lg hover:bg-indigo-700 hover:scale-110 hover:shadow-xl transition-all duration-200 z-20 group">
         <span class="text-2xl -ml-1">✍️</span>
         <span class="absolute right-16 bg-slate-800 text-white text-xs font-medium px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none">
           '{{ novel.title }}' 블록 글쓰기

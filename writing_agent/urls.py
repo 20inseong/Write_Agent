@@ -11,16 +11,20 @@ urlpatterns = [
     path("writer/setup/", views.writer_setup, name="writer_setup"),
     path("editor/", views.editor, name="editor"),
     
-    # 세계관 창작용
+    # 세계관 글쓰기용
+    path("writer/setup/<int:novel_id>/", views.writer_setup, name="writer_setup_with_id"),
+    path("editor/<int:novel_id>/", views.editor, name="editor_with_id"),
+    path('api/verify-keywords/<int:novel_id>/', views.verify_keywords_api, name='verify_keywords_api'),
+
+    # 세계관 DB 이용
     path("writer/setup/world/", views.world_list_view, name="world_list"),
     path("world/<int:novel_id>/", views.world_category_view, name="world_category"),
     path("world/<int:novel_id>/settings/", views.novel_settings_view, name="novel_settings"),
     path("world/<int:novel_id>/<str:category>/", views.world_element_list_view, name="world_element_list"),
     path("world/<int:novel_id>/<str:category>/<uuid:element_id>/", views.world_element_detail_view, name="world_element_detail"),
-
     path("world/<int:novel_id>/<str:category>/<uuid:element_id>/delete/", views.world_element_delete_view, name="world_element_delete"),
 
     path('world/create/', views.create_novel, name='create_novel'),
     path('world/delete/<int:novel_id>/', views.delete_novel, name='delete_novel'),
-    path('world/element_action/<int:novel_id>/<str:category>/', views.world_element_bulk_action, name='world_element_bulk_action'),
+    path('world/element_action/<int:novel_id>/<str:category>/', views.world_element_bulk_action, name='world_element_bulk_action'),    
 ]

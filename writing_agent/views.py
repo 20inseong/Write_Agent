@@ -16,6 +16,11 @@ from .models import Novel
 from django.shortcuts import get_object_or_404, redirect
 from .models import Novel, StoryElement, CharacterDetail, FactionDetail, ItemDetail, LocationDetail, EventDetail
 from django.urls import reverse
+import json
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from .prompt import oov_extract_prompt
+
 
 load_dotenv()
 
@@ -46,12 +51,13 @@ def signup_view(request):
 
 # 블록의 틀을 세팅
 @login_required
-def writer_setup(request: HttpRequest) -> HttpResponse:
-   
+def writer_setup(request: HttpRequest, novel_id: int = None) -> HttpResponse:
+    novel = get_object_or_404(Novel, id=novel_id, author=request.user) if novel_id else None
     return render(
         request, 
         "writer_setup.html", 
-        {"initial_block_index": 1})
+        {"initial_block_index": 1, "novel": novel}
+    )
 
 
 @login_required
@@ -75,10 +81,104 @@ def world_list_view(request):
 
 
 @login_required
-def editor(request: HttpRequest) -> HttpResponse:
+def editor(request: HttpRequest, novel_id: int = None) -> HttpResponse:
+    novel = get_object_or_404(Novel, id=novel_id, author=request.user) if novel_id else None
     ai_draft_text = ""
     
     if request.method == "POST":
+        action = request.POST.get("unregistered_action", "")
+
+        # 작가가 팝업에서 수동으로 작성한 데이터 저장
+        if action == 'manual':
+            manual_data_str = request.POST.get("manual_setup_data", "{}")
+            try:
+                manual_data = json.loads(manual_data_str)
+                for word, data in manual_data.items():
+                    category = data.get("category", "CHARACTER")
+                    details = data.get("details", {})
+
+                    # 뼈대 생성 (폴더는 기본 '/' 위치로 자동 지정)
+                    new_element = StoryElement.objects.create(
+                        author=request.user,
+                        novel=novel,
+                        category=category,
+                        name=word,
+                        keyword_name=word,
+                        folder_path="/"
+                    )
+
+                    # 카테고리별 세부 설정 저장
+                    if category == 'CHARACTER':
+                        CharacterDetail.objects.create(
+                            element=new_element,
+                            aliases=details.get("aliases", ""),
+                            birthday=details.get("birthday", ""),
+                            main_skill=details.get("main_skill", ""),
+                            level=details.get("level", ""),
+                            weapon=details.get("weapon", ""),
+                            clothing=details.get("clothing", ""),
+                            personality=details.get("personality", ""),
+                            appearance=details.get("appearance", ""),
+                            desire=details.get("desire", ""),
+                            taboo=details.get("taboo", ""),
+                            allies=details.get("allies", ""),
+                            enemies=details.get("enemies", "")
+                        )
+                    elif category == 'FACTION':
+                        FactionDetail.objects.create(
+                            element=new_element,
+                            alignment=details.get("alignment", ""),
+                            base_location=details.get("base_location", ""),
+                            ideology=details.get("ideology", ""),
+                            hierarchy=details.get("hierarchy", ""),
+                            key_members=details.get("key_members", ""),
+                            assets=details.get("assets", "")
+                        )
+                    elif category == 'ITEM':
+                        ItemDetail.objects.create(
+                            element=new_element,
+                            item_type=details.get("item_type", ""),
+                            appearance=details.get("appearance", ""),
+                            effect=details.get("effect", ""),
+                            penalty=details.get("penalty", ""),
+                            origin=details.get("origin", "")
+                        )
+                    elif category == 'LOCATION':
+                        LocationDetail.objects.create(
+                            element=new_element,
+                            region=details.get("region", ""),
+                            ruler=details.get("ruler", ""),
+                            climate=details.get("climate", ""),
+                            significance=details.get("significance", ""),
+                            hidden_history=details.get("hidden_history", "")
+                        )
+                    elif category == 'EVENT':
+                        EventDetail.objects.create(
+                            element=new_element,
+                            timeline=details.get("timeline", ""),
+                            participants=details.get("participants", ""),
+                            trigger=details.get("trigger", ""),
+                            impact=details.get("impact", "")
+                        )
+            except Exception as e:
+                print(f"수동 설정 DB 저장 중 에러: {e}")
+
+        # 뼈대(이름)만 빈 껍데기로 임시 저장 (수동 작성 패스 시)
+        elif action == 'stub':
+            keywords_str = request.POST.get("unregistered_keywords", "")
+            if keywords_str:
+                keywords_list = [k.strip() for k in keywords_str.split(',') if k.strip()]
+                for word in keywords_list:
+                    new_element = StoryElement.objects.create(
+                        author=request.user,
+                        novel=novel,
+                        category='CHARACTER', # 기본값은 인물로
+                        name=word,
+                        keyword_name=word,
+                        folder_path="/"
+                    )
+                    CharacterDetail.objects.create(element=new_element)
+
         # 빈 딕셔너리 생성
         block_data={}
 
@@ -100,11 +200,8 @@ def editor(request: HttpRequest) -> HttpResponse:
                 # 방 안에 데이터 삽입
                 block_data[block_num][field_name] = value
 
-        
         # 번호 순서대로 리스트 구현
         sorted_blocks = [block_data[num] for num in sorted(block_data.keys(), key=int)]
-
-
 
         print("====== 블록 데이터 정리 ======")
         for i, block in enumerate(sorted_blocks, 1):
@@ -118,7 +215,11 @@ def editor(request: HttpRequest) -> HttpResponse:
                 all_user_input_text += f" {v}"
 
         # DB를 뒤져서 합친 텍스트 안에 키워드가 있는지 확인
-        user_elements = StoryElement.objects.filter(author=request.user, is_deleted=False)
+        if novel:
+            user_elements = StoryElement.objects.filter(novel=novel, author=request.user, is_deleted=False)
+        else:
+            user_elements = StoryElement.objects.none()
+
         matched_contexts = []
         
         for element in user_elements:
@@ -505,7 +606,10 @@ def world_element_bulk_action(request, novel_id, category):
 
 
         element_ids = request.POST.getlist("element_ids")
-        target_folder = request.POST.get("target_folder", "/")
+        target_folder = request.POST.get("target_folder", "/").strip()
+        if not target_folder.endswith('/'):
+            target_folder += '/'
+
         elements = StoryElement.objects.filter(id__in=element_ids, novel=novel, author=request.user)
         
         if action == "delete":
@@ -547,3 +651,68 @@ def world_element_bulk_action(request, novel_id, category):
 
     # 작업 완료 후, 머물러 있던 현재 폴더 위치로 돌아감
     return redirect(f"{reverse('world_element_list', args=[novel.id, category])}?folder={current_folder}")
+
+
+@login_required
+@require_POST
+def verify_keywords_api(request: HttpRequest, novel_id: int = None) -> JsonResponse:
+    novel = get_object_or_404(Novel, id=novel_id, author=request.user) if novel_id else None
+
+    try:
+        data = json.loads(request.body)
+        blocks = data.get("blocks", [])
+
+        # 모든 블록 입력 텍스트 병합
+        all_user_input_text = ""
+        for block in blocks:
+            for val in block.values():
+                if val:
+                    all_user_input_text += f" {val}"
+
+        # 1차 검증 (Python Fast-Match): DB 등록 키워드 스캔
+        user_elements = StoryElement.objects.filter(novel=novel, author=request.user, is_deleted=False)
+        matched_keywords = set()
+
+        for element in user_elements:
+            if not element.keyword_name:
+                continue
+            keyword_list = [k.strip() for k in element.keyword_name.split(',')]
+            for kw in keyword_list:
+                if kw and kw in all_user_input_text:
+                    matched_keywords.add(kw)
+
+        matched_keywords_list = list(matched_keywords)
+
+        # 2차 검증 (LLM Context Extraction): 제미나이 호출
+        api_key = os.environ.get("GEMINI_API_KEY")
+        client = genai.Client(api_key=api_key)
+
+        llm_input = (
+            f"[기존 등록 키워드]: {', '.join(matched_keywords_list) if matched_keywords_list else '없음'}\n"
+            f"[소설 텍스트]: {all_user_input_text}"
+        )
+
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=llm_input,
+            config=types.GenerateContentConfig(
+                system_instruction=oov_extract_prompt,
+                temperature=0.1,  # 일관된 키워드 추출을 위한 낮은 온도
+            )
+        )
+
+        extracted_text = response.text.strip()
+        new_oov_keywords = []
+
+        # '없음'이 아니면 쉼표 기준으로 파싱
+        if extracted_text and extracted_text != "없음":
+            new_oov_keywords = [k.strip() for k in extracted_text.split(',') if k.strip()]
+
+        return JsonResponse({
+            "status": "success",
+            "matched": matched_keywords_list,
+            "unregistered": new_oov_keywords
+        })
+
+    except Exception as e:
+        return JsonResponse({"status": "error", "message": str(e)}, status=500)
