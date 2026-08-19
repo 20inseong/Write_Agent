@@ -7,9 +7,11 @@ from django.views.decorators.http import require_GET
 from django.contrib.auth.decorators import login_required
 from google import genai
 from google.genai import types
+import re
 
 from ..models import Novel, StoryElement, CharacterDetail, FactionDetail, ItemDetail, LocationDetail, EventDetail
 from ..prompt import prompt_labels, system_prompt
+from ..utils import generate_saju_prompt
 
 load_dotenv()
 
@@ -189,6 +191,15 @@ def editor(request: HttpRequest, novel_id: int = None) -> HttpResponse:
                     if element.category == 'CHARACTER' and hasattr(element, 'character_detail'):
                         d = element.character_detail
                         detail_text = f"이명/별호: {d.aliases}, 주력능력: {d.main_skill}, 무기: {d.weapon}, 성격: {d.personality}, 외형: {d.appearance}, 욕망: {d.desire}, 금기: {d.taboo}"
+                        
+                        if d.birthday:
+                            # "1024년 5월 15일 14시" 같은 문자열에서 숫자 4개 추출
+                            numbers = re.findall(r'\d+', d.birthday)
+                            if len(numbers) >= 4:
+                                year, month, day, hour = map(int, numbers[:4])
+                                # utils.py의 사주/오행 프롬프트 텍스트를 받아와서 캐릭터 디테일에 덧붙임
+                                saju_context = generate_saju_prompt(year, month, day, hour)
+                                detail_text += f" | {saju_context}"
                     elif element.category == 'FACTION' and hasattr(element, 'faction_detail'):
                         d = element.faction_detail
                         detail_text = f"성향: {d.alignment}, 본거지: {d.base_location}, 이념: {d.ideology}, 핵심인물: {d.key_members}, 자산/규모: {d.assets}"
@@ -265,7 +276,14 @@ def editor(request: HttpRequest, novel_id: int = None) -> HttpResponse:
                 
             except Exception as e:
                 print(f"API 호출 중 에러 발생: {e}")
-                final_draft += f"\n\n[장면 {i} 생성 중 제미나이 API 오류가 발생했습니다.]\n에러 내용: {e}\n"
+                error_msg = str(e).upper()
+                
+                # 503 과부하 에러인 경우 부드러운 안내 메시지 출력
+                if "503" in error_msg or "UNAVAILABLE" in error_msg:
+                    final_draft += f"\n\n [장면 {i}] 현재 AI 서버에 접속자가 많아 일시적인 지연이 발생하고 있습니다. 1~2분 뒤에 다시 [생성] 버튼을 눌러주세요.\n"
+                else:
+                    # 그 외 알 수 없는 에러
+                    final_draft += f"\n\n [장면 {i}] 초안을 생성하는 도중 알 수 없는 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.\n"
 
         ai_draft_text = final_draft.strip()
 

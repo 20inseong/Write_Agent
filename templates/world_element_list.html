@@ -189,8 +189,17 @@
                     <input type="text" name="aliases" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg outline-none">
                     </div>
                     <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">생일 (자유 입력)</label>
-                    <input type="text" name="birthday" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg outline-none">
+                      <div class="flex justify-between items-center mb-1">
+                        <label class="block text-xs font-semibold text-slate-600">생일 (자유 입력)</label>
+                        <!-- 랜덤 버튼 -->
+                        <button type="button" onclick="generateRandomBirthday(event)" class="text-[10px] font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-2 py-0.5 rounded transition shadow-sm">
+                          🎲 랜덤
+                        </button>
+                        <span class="absolute right-0 bottom-6 bg-slate-800 text-white text-[10px] font-medium px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition duration-200 whitespace-nowrap pointer-events-none z-10 shadow-lg">
+                          생성 범위: 500년 ~ 2500년, 1월~12월, 0시~24시 (클릭 후 수정 가능)
+                        </span>
+                      </div>
+                      <input type="text" name="birthday" id="input-birthday" placeholder="예: 1024년 5월 15일 14시" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg outline-none">
                     </div>
                     <div>
                     <label class="block text-xs font-semibold text-slate-600 mb-1">주력 능력/스킬</label>
@@ -604,6 +613,33 @@
     const folderPath = document.getElementById('target-folder-input').value.trim() || '/';
     document.getElementById('form-target-folder').value = folderPath;
     executeAction('move');
+  }
+
+  // 생일 랜덤 생성 로직
+  function generateRandomBirthday(event) {
+    // 연도: 대략 500년 ~ 2500년 사이의 무작위 연도
+    const year = Math.floor(Math.random() * 2000) + 500;
+    // 월: 1 ~ 12
+    const month = Math.floor(Math.random() * 12) + 1;
+    // 일: 복잡한 윤년 오류 방지를 위해 1 ~ 28일로 고정
+    const day = Math.floor(Math.random() * 28) + 1;
+    // 시간: 0 ~ 23시
+    const hour = Math.floor(Math.random() * 24);
+
+    // 문자열 조합 후 인풋 창에 삽입
+    const randomDateStr = `${year}년 ${month}월 ${day}일 ${hour}시`;
+    document.getElementById('input-birthday').value = randomDateStr;
+    
+    // 시각적 피드백: 작가가 눌렀음을 인지하도록 버튼 글자를 잠깐 바꿈
+    const btn = event.currentTarget;
+    const originalText = btn.innerText;
+    btn.innerText = "✅ 완료!";
+    btn.classList.add("bg-emerald-100", "text-emerald-700");
+    
+    setTimeout(() => { 
+      btn.innerText = originalText; 
+      btn.classList.remove("bg-emerald-100", "text-emerald-700");
+    }, 800);
   }
 </script>
 {% endblock %}
