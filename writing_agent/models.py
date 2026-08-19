@@ -24,7 +24,7 @@ class Novel(models.Model):
 
 
 class StoryElement(models.Model):
-    # 카테고리 정의
+
     CATEGORY_CHOICES = (
         ('CHARACTER', '인물'),
         ('FACTION', '단체'),
@@ -33,23 +33,15 @@ class StoryElement(models.Model):
         ('EVENT', '사건'),
     )
 
-    # [보안] UUID 적용: 예측 불가능한 고유 ID로 데이터 탈취(IDOR) 원천 차단
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    
-    # [보안] 데이터 격리: 이 데이터의 소유자
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='story_elements')
-
-    # 특정 소설에 속하도록 묶어주는 외래키 추가
     novel = models.ForeignKey(Novel, on_delete=models.CASCADE, null=True, blank=True, related_name="elements")
-
-    # 유저가 관리할 폴더 경로
     folder_path = models.CharField(max_length=255, default="/", verbose_name="폴더 경로")
     
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, verbose_name="분류")
     name = models.CharField(max_length=100, verbose_name="명칭 (객체 이름)")
     keyword_name = models.CharField(max_length=255, verbose_name="매칭 키워드 (쉼표 구분)")
     
-    # [보안] 논리적 삭제 (Soft Delete): 실수로 삭제해도 DB에는 남아있게 함
     is_deleted = models.BooleanField(default=False, verbose_name="삭제 여부")
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -58,10 +50,8 @@ class StoryElement(models.Model):
     def __str__(self):
         return f"[{self.get_category_display()}] {self.name}"
 
-# ==========================================
-# 세부 확장 테이블
-# ==========================================
 
+# 세부 확장 테이블
 # 캐릭터(Character)
 class CharacterDetail(models.Model):
     # 1:1 연결 고리
@@ -69,7 +59,7 @@ class CharacterDetail(models.Model):
     
     # [기본 정보]
     aliases = models.CharField(max_length=100, blank=True, verbose_name="이명/별호")
-    birthday = models.CharField(max_length=100, blank=True, verbose_name="생일 (자유 입력)")
+    birthday = models.CharField(max_length=100, blank=True, verbose_name="생일")
     
     # [외형 및 분위기]
     appearance = models.TextField(blank=True, verbose_name="첫인상 및 신체적 특징")
@@ -78,7 +68,7 @@ class CharacterDetail(models.Model):
     # [능력치]
     main_skill = models.CharField(max_length=200, blank=True, verbose_name="주력 능력/스킬")
     level = models.CharField(max_length=100, blank=True, verbose_name="현재 수준/경지")
-    weapon = models.CharField(max_length=100, blank=True, verbose_name="사용 무기")
+    weapon = models.CharField(max_length=100, blank=True, verbose_name="주로 사용하는 것(무기, 물건)")
     
     # [성향 및 목표]
     personality = models.TextField(blank=True, verbose_name="성격 (장/단점)")
