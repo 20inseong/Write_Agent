@@ -40,6 +40,8 @@ def world_element_list_view(request, novel_id, category):
                 keyword_name=keyword_name,
                 folder_path=current_folder
             )
+
+            other_details = request.POST.get("other_details", "")
             
             # 자식 테이블 생성 및 상세 데이터 저장
             if db_category == 'CHARACTER':
@@ -56,7 +58,8 @@ def world_element_list_view(request, novel_id, category):
                     desire=request.POST.get("desire", ""),
                     taboo=request.POST.get("taboo", ""),
                     allies=request.POST.get("allies", ""),
-                    enemies=request.POST.get("enemies", "")
+                    enemies=request.POST.get("enemies", ""),
+                    other_details=other_details
                 )
             elif db_category == 'FACTION':
                 FactionDetail.objects.create(
@@ -66,7 +69,8 @@ def world_element_list_view(request, novel_id, category):
                     ideology=request.POST.get("ideology", ""),
                     hierarchy=request.POST.get("hierarchy", ""),
                     key_members=request.POST.get("key_members", ""),
-                    assets=request.POST.get("assets", "")
+                    assets=request.POST.get("assets", ""),
+                    other_details=other_details
                 )
             elif db_category == 'ITEM':
                 ItemDetail.objects.create(
@@ -75,7 +79,8 @@ def world_element_list_view(request, novel_id, category):
                     appearance=request.POST.get("appearance", ""),
                     effect=request.POST.get("effect", ""),
                     penalty=request.POST.get("penalty", ""),
-                    origin=request.POST.get("origin", "")
+                    origin=request.POST.get("origin", ""),
+                    other_details=other_details
                 )
             elif db_category == 'LOCATION':
                 LocationDetail.objects.create(
@@ -84,7 +89,8 @@ def world_element_list_view(request, novel_id, category):
                     ruler=request.POST.get("ruler", ""),
                     climate=request.POST.get("climate", ""),
                     significance=request.POST.get("significance", ""),
-                    hidden_history=request.POST.get("hidden_history", "")
+                    hidden_history=request.POST.get("hidden_history", ""),
+                    other_details=other_details
                 )
             elif db_category == 'EVENT':
                 EventDetail.objects.create(
@@ -92,7 +98,8 @@ def world_element_list_view(request, novel_id, category):
                     timeline=request.POST.get("timeline", ""),
                     participants=request.POST.get("participants", ""),
                     trigger=request.POST.get("trigger", ""),
-                    impact=request.POST.get("impact", "")
+                    impact=request.POST.get("impact", ""),
+                    other_details=other_details
                 )
                 
             # 새로고침
@@ -162,6 +169,7 @@ def world_element_detail_view(request, novel_id, category, element_id):
             detail.taboo = request.POST.get("taboo", detail.taboo)
             detail.allies = request.POST.get("allies", detail.allies)
             detail.enemies = request.POST.get("enemies", detail.enemies)
+            detail.other_details = request.POST.get("other_details", detail.other_details)
             detail.save()
             
         elif element.category == 'FACTION' and detail:
@@ -171,6 +179,7 @@ def world_element_detail_view(request, novel_id, category, element_id):
             detail.hierarchy = request.POST.get("hierarchy", detail.hierarchy)
             detail.key_members = request.POST.get("key_members", detail.key_members)
             detail.assets = request.POST.get("assets", detail.assets)
+            detail.other_details = request.POST.get("other_details", detail.other_details)
             detail.save()
             
         elif element.category == 'ITEM' and detail:
@@ -179,6 +188,7 @@ def world_element_detail_view(request, novel_id, category, element_id):
             detail.effect = request.POST.get("effect", detail.effect)
             detail.penalty = request.POST.get("penalty", detail.penalty)
             detail.origin = request.POST.get("origin", detail.origin)
+            detail.other_details = request.POST.get("other_details", detail.other_details)
             detail.save()
             
         elif element.category == 'LOCATION' and detail:
@@ -187,6 +197,7 @@ def world_element_detail_view(request, novel_id, category, element_id):
             detail.climate = request.POST.get("climate", detail.climate)
             detail.significance = request.POST.get("significance", detail.significance)
             detail.hidden_history = request.POST.get("hidden_history", detail.hidden_history)
+            detail.other_details = request.POST.get("other_details", detail.other_details)
             detail.save()
             
         elif element.category == 'EVENT' and detail:
@@ -194,6 +205,7 @@ def world_element_detail_view(request, novel_id, category, element_id):
             detail.participants = request.POST.get("participants", detail.participants)
             detail.trigger = request.POST.get("trigger", detail.trigger)
             detail.impact = request.POST.get("impact", detail.impact)
+            detail.other_details = request.POST.get("other_details", detail.other_details)
             detail.save()
 
         # 저장 후 현재 페이지 새로고침

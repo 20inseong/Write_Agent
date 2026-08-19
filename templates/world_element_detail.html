@@ -118,6 +118,18 @@
           <div><h3 class="text-lg font-bold text-slate-800 mb-2 border-l-4 border-purple-500 pl-3">세계관에 미친 파급력</h3><p class="whitespace-pre-wrap leading-relaxed view-mode">{{ detail.impact|default:"설정된 내용이 없습니다." }}</p><textarea name="impact" rows="3" class="edit-mode hidden w-full p-3 border rounded-lg">{{ detail.impact }}</textarea></div>
           {% endif %}
 
+          <div class="mt-12 pt-8 border-t-2 border-slate-200 border-dashed pb-16">
+            <h3 class="text-xl font-extrabold text-slate-800 mb-3 border-l-4 border-slate-500 pl-3">
+              기타 사항 <span class="text-sm font-normal text-slate-400 ml-2">형식에 구애받지 않는 자유로운 설정 메모</span>
+            </h3>
+            
+            <!-- 뷰 모드: 내용이 길어질 것을 대비해 최소 높이(min-h)를 주고 배경색으로 안정감 조성 -->
+            <p class="whitespace-pre-wrap leading-relaxed view-mode min-h-[8rem] text-slate-600 bg-slate-50 p-6 rounded-xl border border-slate-100">{{ detail.other_details|default:"추가적으로 묘사할 기타 설정이나 메모가 없습니다." }}</p>
+            
+            <!-- 에디트 모드: 넓은 입력 공간(rows="8")과 안쪽 그림자(shadow-inner)로 깊이감을 주어 집중을 유도 -->
+            <textarea name="other_details" rows="8" class="edit-mode hidden w-full p-5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none resize-y text-slate-700 bg-white shadow-inner" placeholder="기존 양식에 담기 힘든 자잘한 버릇, 뒷배경, 숨겨진 떡밥 등을 자유롭게 쏟아내세요.">{{ detail.other_details }}</textarea>
+          </div>
+          
         </div>
       </form>
     </main>

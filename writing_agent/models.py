@@ -82,6 +82,8 @@ class CharacterDetail(models.Model):
     # [시스템 Hidden] AI 역산 사주 및 오행 데이터 전용 공간
     saju_meta = models.JSONField(default=dict, blank=True, verbose_name="사주/오행 메타 데이터")
 
+    other_details = models.TextField(blank=True, null=True, verbose_name="기타 사항")
+
 
 # 단체 및 세력 (FACTION)
 class FactionDetail(models.Model):
@@ -92,6 +94,7 @@ class FactionDetail(models.Model):
     key_members = models.TextField(blank=True, verbose_name="핵심 소속 인물")
     base_location = models.CharField(max_length=200, blank=True, verbose_name="본거지 위치")
     assets = models.TextField(blank=True, verbose_name="고유 기술, 자산 및 세력 규모")
+    other_details = models.TextField(blank=True, null=True, verbose_name="기타 사항")
 
 # 물건 (ITEM)
 class ItemDetail(models.Model):
@@ -101,6 +104,7 @@ class ItemDetail(models.Model):
     effect = models.TextField(blank=True, verbose_name="효과 및 이점")
     penalty = models.TextField(blank=True, verbose_name="제약, 획득 조건 및 부작용")
     origin = models.TextField(blank=True, verbose_name="기원 및 이전 주인의 이야기")
+    other_details = models.TextField(blank=True, null=True, verbose_name="기타 사항")
 
 # 장소 (LOCATION)
 class LocationDetail(models.Model):
@@ -110,6 +114,7 @@ class LocationDetail(models.Model):
     ruler = models.CharField(max_length=200, blank=True, verbose_name="지배 세력 또는 통치자")
     significance = models.TextField(blank=True, verbose_name="스토리적 상징성 (랜드마크)")
     hidden_history = models.TextField(blank=True, verbose_name="장소에 얽힌 숨겨진 역사")
+    other_details = models.TextField(blank=True, null=True, verbose_name="기타 사항")
 
 # 사건 (EVENT)
 class EventDetail(models.Model):
@@ -118,6 +123,7 @@ class EventDetail(models.Model):
     participants = models.TextField(blank=True, verbose_name="관련 주체 (인물 및 단체)")
     trigger = models.TextField(blank=True, verbose_name="발발 원인 및 전개 흐름")
     impact = models.TextField(blank=True, verbose_name="세계관에 미친 파급력 및 결과")
+    other_details = models.TextField(blank=True, null=True, verbose_name="기타 사항")
 
     def __str__(self):
         return f"{self.element.name}의 상세 설정"
