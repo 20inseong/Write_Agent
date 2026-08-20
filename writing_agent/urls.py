@@ -16,6 +16,11 @@ urlpatterns = [
     path("editor/<int:novel_id>/", views.editor, name="editor_with_id"),
     path('api/verify-keywords/<int:novel_id>/', views.verify_keywords_api, name='verify_keywords_api'),
 
+    # API 통신용
+    path('api/verify-keywords/<int:novel_id>/', views.verify_keywords_api, name='verify_keywords_api'),
+    path('api/generate-block/', views.generate_single_block_api, name='generate_single_block_api_free'),
+    path('api/generate-block/<int:novel_id>/', views.generate_single_block_api, name='generate_single_block_api'),
+
     # 세계관 DB 이용
     path("writer/setup/world/", views.world_list_view, name="world_list"),
     path("world/<int:novel_id>/", views.world_category_view, name="world_category"),

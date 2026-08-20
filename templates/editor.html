@@ -5,9 +5,12 @@
 {% block content %}
 <div class="flex h-screen w-full flex-col overflow-hidden">
   <header class="flex shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 py-3">
-    <a href="{% url 'writer_setup' %}" class="text-sm text-indigo-600 hover:text-indigo-800">← 블록 세팅</a>
+    <button id="open-modal-btn" class="text-sm font-bold text-indigo-600 hover:text-indigo-800 transition-colors">
+      ＋ 새 블록 추가
+    </button>
     <span class="text-sm font-medium text-slate-600">2분할 에디터</span>
     <span class="w-16"></span>
+    <a href="{% url 'dashboard' %}" class="text-sm text-slate-500 hover:text-slate-700">대시보드 복귀 ⭢</a>
   </header>
 
   <div class="flex min-h-0 flex-1 flex-row">
@@ -58,6 +61,53 @@
     </section>
   </div>
 </div>
+
+<div id="add-block-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900 bg-opacity-60 backdrop-blur-sm transition-opacity">
+  <div class="bg-white rounded-xl w-full max-w-lg p-6 shadow-2xl">
+    <h3 class="text-lg font-bold text-slate-800 mb-4">새 장면(블록) 설계</h3>
+    <form id="add-block-form" class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">장면의 상황 (필수)</label>
+        <textarea name="situation" class="w-full resize-none rounded-lg border border-slate-300 p-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" rows="2" placeholder="예: 객잔에서 시비가 붙는 상황" required></textarea>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">시작 글귀 (선택)</label>
+        <input type="text" name="start_text" class="w-full rounded-lg border border-slate-300 p-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" placeholder="시작할 대사나 묘사">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">장면의 절정 / 키 포인트 (필수)</label>
+        <textarea name="climax" class="w-full resize-none rounded-lg border border-slate-300 p-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" rows="2" placeholder="이 장면에서 전달하고자 하는 핵심" required></textarea>
+      </div>
+      <div class="mt-6 flex justify-end gap-2">
+        <button type="button" id="close-modal-btn" class="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100">취소</button>
+        <button type="submit" id="submit-block-btn" class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition-colors">장면 생성하기</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="keyword-check-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-slate-900 bg-opacity-60 backdrop-blur-sm transition-opacity">
+  <div class="bg-white rounded-xl w-full max-w-md p-6 shadow-2xl">
+    <h3 class="text-lg font-bold text-slate-800 mb-2">⚠️ 미등록 설정 감지</h3>
+    <p class="text-sm text-slate-600 mb-4">세계관 DB에 없는 새로운 키워드가 발견되었습니다. 카테고리를 지정해주세요.</p>
+    
+    <div id="unregistered-keywords-list" class="flex flex-col gap-3 mb-6 max-h-48 overflow-y-auto pr-2">
+    </div>
+    
+    <div class="flex flex-col gap-2">
+      <!-- 초기에는 비활성화(disabled) 상태 -->
+      <button type="button" id="btn-add-stub" disabled class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white opacity-50 cursor-not-allowed hover:bg-indigo-700 transition-colors">
+        선택한 카테고리로 추가 후 초안 생성
+      </button>
+      <button type="button" id="btn-ignore" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">
+        무시하고 초안만 생성
+      </button>
+      <button type="button" id="btn-cancel-keyword" class="mt-2 text-sm text-slate-500 hover:text-slate-700 underline">
+        취소하고 다시 작성하기
+      </button>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block extra_scripts %}
@@ -69,16 +119,13 @@
     const similarityDisplay = document.getElementById("similarity-display");
     const maxChars = 5000;
 
-    // ----------------------------------------------------
     // N-gram (2어절) 생성기
-    // ----------------------------------------------------
     function getBigrams(text) {
       // 특수기호를 지우고 순수 한글/영문/숫자만 남김
       const cleanText = text.replace(/[.,!?\"\'\n\r]/g, " ").trim();
       
       // 띄어쓰기 기준으로 단어 분리
       const words = cleanText.split(/\s+/).filter(w => w.length > 0);
-      
       const bigrams = new Set(); // 중복 방지를 위해 Set 사용
       
       // 글이 너무 짧아 1단어밖에 없으면 그냥 반환
@@ -91,7 +138,6 @@
       for (let i = 0; i < words.length - 1; i++) {
         bigrams.add(words[i] + " " + words[i + 1]);
       }
-      
       return bigrams;
     }
 
@@ -99,9 +145,7 @@
     const aiText = aiDraftElement ? aiDraftElement.innerText || "" : "";
     const aiBigrams = getBigrams(aiText);
 
-    // ----------------------------------------------------
     // 실시간 입력 감지 및 유사도 계산
-    // ----------------------------------------------------
     function handleInput() {
       const userText = editor.value;
       counter.textContent = `현재 ${userText.length}자 / ${maxChars}자`;
@@ -148,6 +192,219 @@
     // 에디터에 타이핑(input) 할 때마다 검사 실행
     editor.addEventListener("input", handleInput);
     handleInput();
+
+    // 모달 제어 및 비동기(Fetch) 추가 로직
+    const addBlockModal = document.getElementById("add-block-modal");
+    const keywordCheckModal = document.getElementById("keyword-check-modal");
+    const openModalBtn = document.getElementById("open-modal-btn");
+    const closeModalBtn = document.getElementById("close-modal-btn");
+    const addBlockForm = document.getElementById("add-block-form");
+    const submitBlockBtn = document.getElementById("submit-block-btn");
+    const emptyNotice = document.getElementById("empty-ai-notice");
+
+    const btnAddStub = document.getElementById("btn-add-stub");
+    
+    // 상태 저장용 전역 변수
+    let currentBlockData = null;
+    let currentNovelId = null;
+    let currentUnregistered = [];
+    let currentApiUrl = "/api/generate-block/";
+
+    openModalBtn.addEventListener("click", () => addBlockModal.classList.remove("hidden"));
+    closeModalBtn.addEventListener("click", () => addBlockModal.classList.add("hidden"));
+
+    // Django CSRF 토큰 추출 함수
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+
+    addBlockForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const originalBtnText = submitBlockBtn.innerText;
+      submitBlockBtn.innerText = "키워드 스캔 중...";
+      submitBlockBtn.disabled = true;
+
+      const formData = new FormData(addBlockForm);
+      currentBlockData = {};
+      formData.forEach((value, key) => { currentBlockData[key] = value; });
+
+      const pathSegments = window.location.pathname.split('/').filter(Boolean);
+      if (pathSegments.length >= 2 && pathSegments[0] === 'editor' && !isNaN(pathSegments[1])) {
+          currentNovelId = pathSegments[1];
+          currentApiUrl = `/api/generate-block/${currentNovelId}/`;
+      }
+
+      // 세계관 모드일 경우 키워드 검증 API 호출
+      if (currentNovelId) {
+        try {
+          const verifyRes = await fetch(`/api/verify-keywords/${currentNovelId}/`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "X-CSRFToken": getCookie("csrftoken") },
+            body: JSON.stringify({ blocks: [currentBlockData] })
+          });
+          const verifyData = await verifyRes.json();
+
+          if (verifyData.status === "success" && verifyData.unregistered && verifyData.unregistered.length > 0) {
+            // 미등록 키워드 발견 시 두 번째 팝업으로 릴레이
+            currentUnregistered = verifyData.unregistered;
+            addBlockModal.classList.add("hidden");
+            
+            const kwContainer = document.getElementById("unregistered-keywords-list");
+            kwContainer.innerHTML = currentUnregistered.map(kw =>`
+            <div class="flex items-center justify-between bg-slate-50 p-2 rounded border border-slate-200">
+                <span class="text-sm font-bold text-slate-700">${kw}</span>
+                <select class="kw-category-select text-sm border-slate-300 rounded focus:ring-indigo-500 py-1" data-kw="${kw}">
+                  <option value="">카테고리 선택 (필수)</option>
+                  <option value="CHARACTER">인물</option>
+                  <option value="FACTION">단체</option>
+                  <option value="ITEM">물건</option>
+                  <option value="LOCATION">장소</option>
+                  <option value="EVENT">사건</option>
+                </select>
+              </div>
+            `).join('');
+            
+            keywordCheckModal.classList.remove("hidden");
+            submitBlockBtn.innerText = originalBtnText; // 상태 복구
+            submitBlockBtn.disabled = false;
+
+            const selects = kwContainer.querySelectorAll('.kw-category-select');
+            btnAddStub.disabled = true;
+            btnAddStub.classList.add("opacity-50", "cursor-not-allowed");
+
+            selects.forEach(sel => {
+              sel.addEventListener('change', () => {
+                const allSelected = Array.from(selects).every(s => s.value !== "");
+                if (allSelected) {
+                  btnAddStub.disabled = false;
+                  btnAddStub.classList.remove("opacity-50", "cursor-not-allowed");
+                } else {
+                  btnAddStub.disabled = true;
+                  btnAddStub.classList.add("opacity-50", "cursor-not-allowed");
+                }
+              });
+            });
+            return; // 여기서 실행 일시 정지
+          }
+        } catch (error) {
+          console.error("키워드 검증 에러:", error);
+        }
+      }
+
+      // 미등록 키워드가 없거나 자유 창작 모드일 경우 바로 초안 생성
+      await executeGenerateDraft('', []);
+      submitBlockBtn.innerText = originalBtnText;
+      submitBlockBtn.disabled = false;
+    });
+
+    // 팝업 버튼 이벤트
+    const btnIgnore = document.getElementById("btn-ignore");
+    const btnCancelKeyword = document.getElementById("btn-cancel-keyword");
+
+    btnAddStub.addEventListener("click", () => {
+      // 선택된 단어와 카테고리를 구조화된 JSON 데이터로 묶기
+      const selects = document.querySelectorAll('.kw-category-select');
+      const structuredKeywords = Array.from(selects).map(s => ({
+        word: s.getAttribute('data-kw'),
+        category: s.value
+      }));
+
+      btnAddStub.innerText = "DB 임시 저장 및 초안 생성 중... ⏳";
+      btnAddStub.disabled = true;
+      btnIgnore.disabled = true;
+      btnCancelKeyword.disabled = true;
+      executeGenerateDraft('stub', structuredKeywords);
+    });
+
+
+    
+
+    btnIgnore.addEventListener("click", () => {
+      btnIgnore.innerText = "무시하고 초안 생성 중... ⏳";
+      btnAddStub.disabled = true;
+      btnIgnore.disabled = true;
+      btnCancelKeyword.disabled = true;
+      executeGenerateDraft('ignore', []);
+    });
+
+    btnCancelKeyword.addEventListener("click", () => {
+      keywordCheckModal.classList.add("hidden");
+      addBlockModal.classList.remove("hidden"); // 다시 입력창으로 복귀
+    });
+
+    // 제미나이 초안 생성 실제 통신 함수
+    async function executeGenerateDraft(actionStr, keywordsArr) {
+      const currentAiText = document.getElementById("ai-draft-text").innerText || "";
+      const previousContext = currentAiText.length > 200 ? currentAiText.slice(-200) : currentAiText;
+
+      const payload = {
+        block: currentBlockData,
+        previous_context: previousContext,
+        unregistered_action: actionStr,
+        unregistered_keywords: keywordsArr
+      };
+
+      try {
+        const response = await fetch(currentApiUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "X-CSRFToken": getCookie("csrftoken") },
+          body: JSON.stringify(payload)
+        });
+        
+        const result = await response.json();
+        if (result.status === "success") {
+          if(emptyNotice) emptyNotice.style.display = 'none';
+          
+          const newDraftHtml = `
+            <div class="mt-8 border-t border-slate-600 pt-6 animate-fade-in">
+              <h3 class="mb-3 text-xs font-bold text-indigo-400">=== [새 장면 추가] ===</h3>
+              <p class="text-slate-200">${result.scene_text.replace(/\n/g, '<br>')}</p>
+            </div>`;
+          document.getElementById("ai-draft-text").insertAdjacentHTML('beforeend', newDraftHtml);
+          
+          addBlockForm.reset();
+          // 모든 통신이 성공적으로 끝난 뒤에 팝업을 숨김
+          keywordCheckModal.classList.add("hidden");
+          addBlockModal.classList.add("hidden");
+
+          // 새로 추가된 텍스트에 맞춰 유사도 게이지를 위한 AI 텍스트 재계산
+          const updatedAiText = document.getElementById("ai-draft-text").innerText || "";
+          const updatedAiBigrams = getBigrams(updatedAiText);
+          
+          // 내부적으로 AI 바이그램 데이터를 갱신
+          aiBigrams.clear();
+          updatedAiBigrams.forEach(v => aiBigrams.add(v));
+
+          handleInput(); // 유사도 게이지 즉시 업데이트
+        } else {
+          alert("생성 실패: " + result.message);
+        }
+      } catch (error) {
+        alert("통신 중 오류가 발생했습니다.");
+      }finally {
+        // 완료 혹은 에러 시 버튼 텍스트와 상태 원래대로 복구
+        btnAddStub.innerText = "인물(기본)로 빠른 추가 후 초안 생성";
+        btnIgnore.innerText = "무시하고 초안만 생성";
+        btnAddStub.disabled = false;
+        btnIgnore.disabled = false;
+        btnCancelKeyword.disabled = false;
+      }
+    }
   })();
 </script>
+<style>
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+</style>
 {% endblock %}

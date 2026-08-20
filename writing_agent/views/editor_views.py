@@ -79,7 +79,8 @@ def editor(request: HttpRequest, novel_id: int = None) -> HttpResponse:
                             desire=details.get("desire", ""),
                             taboo=details.get("taboo", ""),
                             allies=details.get("allies", ""),
-                            enemies=details.get("enemies", "")
+                            enemies=details.get("enemies", ""),
+                            other_details=details.get("other_details", "")
                         )
                     elif category == 'FACTION':
                         FactionDetail.objects.create(
@@ -89,7 +90,8 @@ def editor(request: HttpRequest, novel_id: int = None) -> HttpResponse:
                             ideology=details.get("ideology", ""),
                             hierarchy=details.get("hierarchy", ""),
                             key_members=details.get("key_members", ""),
-                            assets=details.get("assets", "")
+                            assets=details.get("assets", ""),
+                            other_details=details.get("other_details", "")
                         )
                     elif category == 'ITEM':
                         ItemDetail.objects.create(
@@ -98,7 +100,8 @@ def editor(request: HttpRequest, novel_id: int = None) -> HttpResponse:
                             appearance=details.get("appearance", ""),
                             effect=details.get("effect", ""),
                             penalty=details.get("penalty", ""),
-                            origin=details.get("origin", "")
+                            origin=details.get("origin", ""),
+                            other_details=details.get("other_details", "")
                         )
                     elif category == 'LOCATION':
                         LocationDetail.objects.create(
@@ -107,7 +110,8 @@ def editor(request: HttpRequest, novel_id: int = None) -> HttpResponse:
                             ruler=details.get("ruler", ""),
                             climate=details.get("climate", ""),
                             significance=details.get("significance", ""),
-                            hidden_history=details.get("hidden_history", "")
+                            hidden_history=details.get("hidden_history", ""),
+                            other_details=details.get("other_details", "")
                         )
                     elif category == 'EVENT':
                         EventDetail.objects.create(
@@ -115,7 +119,8 @@ def editor(request: HttpRequest, novel_id: int = None) -> HttpResponse:
                             timeline=details.get("timeline", ""),
                             participants=details.get("participants", ""),
                             trigger=details.get("trigger", ""),
-                            impact=details.get("impact", "")
+                            impact=details.get("impact", ""),
+                            other_details=details.get("other_details", "")
                         )
             except Exception as e:
                 print(f"수동 설정 DB 저장 중 에러: {e}")
