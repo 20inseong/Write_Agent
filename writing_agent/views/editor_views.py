@@ -18,10 +18,18 @@ load_dotenv()
 @login_required
 def writer_setup(request: HttpRequest, novel_id: int = None) -> HttpResponse:
     novel = get_object_or_404(Novel, id=novel_id, author=request.user) if novel_id else None
+
+    # 임시 저장된 셋업 데이터 가져오기
+    draft = TemporaryDraft.objects.filter(author=request.user, is_deleted=False).first()
+    saved_setup_context = draft.setup_context if draft else "{}"
     return render(
         request, 
         "writer_setup.html", 
-        {"initial_block_index": 1, "novel": novel}
+        {
+            "initial_block_index": 1, 
+            "novel": novel,
+            "saved_setup_context": saved_setup_context
+        }
     )
 
 @login_required
@@ -173,6 +181,17 @@ def editor(request: HttpRequest, novel_id: int = None) -> HttpResponse:
 
         # 번호 순서대로 리스트 구현
         sorted_blocks = [block_data[num] for num in sorted(block_data.keys(), key=int)]
+
+        try:
+            TemporaryDraft.objects.update_or_create(
+                author=request.user,
+                is_deleted=False,
+                defaults={
+                    'setup_context': json.dumps(sorted_blocks, ensure_ascii=False)
+                }
+            )
+        except Exception as e:
+            print(f"🚨 블록 선제 저장 실패: {e}")
 
         print("====== 블록 데이터 정리 ======")
         for i, block in enumerate(sorted_blocks, 1):

@@ -8,6 +8,9 @@
     <a href="{% url 'dashboard' %}" class="text-sm text-indigo-600 hover:text-indigo-800">← 작업실로</a>
     <h1 class="mt-2 text-3xl font-bold tracking-tight text-slate-800">소설 블록 세팅</h1>
     <p class="mt-2 text-sm text-slate-500">장면별 목표와 키워드를 블록 단위로 구성하세요.</p>
+    <button type="button" id="btn-open-load-modal" class="px-4 py-2 text-sm font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg shadow-sm transition flex items-center gap-2">
+      <span>📂</span> 최근 저장된 블록 보기
+    </button>
   </header>
 
   {% if novel %}
@@ -123,11 +126,127 @@
       </div>
     </div>
   </div>
+
+  <!-- 최근 블록 불러오기 모달창 -->
+  <div id="load-blocks-modal" class="fixed inset-0 z-50 flex hidden items-center justify-center bg-slate-900/50 backdrop-blur-sm transition-opacity p-4">
+    <div class="w-full max-w-3xl rounded-2xl bg-white p-6 shadow-2xl flex flex-col max-h-[85vh]">
+      
+      <div class="flex justify-between items-center mb-4 shrink-0 border-b border-slate-100 pb-4">
+        <h3 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+          <span>📂</span> 최근 작성한 블록 기록
+        </h3>
+        <button type="button" id="btn-close-load-modal" class="text-slate-400 hover:text-slate-600">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+      
+      <!-- 카드들이 나열될 스크롤 영역 -->
+      <div id="saved-blocks-list" class="overflow-y-auto flex-1 space-y-3 pr-2 custom-scrollbar min-h-0 bg-slate-50 p-4 rounded-xl border border-slate-200">
+        <!-- JS가 카드를 동적으로 렌더링할 위치 -->
+      </div>
+      
+      <div class="mt-6 flex justify-end gap-3 shrink-0 pt-2">
+        <button type="button" id="btn-cancel-load" class="px-5 py-2.5 text-sm font-bold text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 transition">취소</button>
+        <button type="button" id="btn-apply-load" class="px-5 py-2.5 text-sm font-bold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition shadow-md">
+          전체 폼에 덮어쓰기
+        </button>
+      </div>
+    </div>
+  </div>
 </main>
 {% endblock %}
 
 {% block extra_scripts %}
 <script>
+  // 💡 백엔드에서 넘겨준 폼 복원 데이터 파싱 (editor_views.py 수정 필수)
+  const savedSetupContextStr = `{{ saved_setup_context|escapejs }}`;
+  let savedBlocks = [];
+  try {
+      if (savedSetupContextStr && savedSetupContextStr !== "{}" && savedSetupContextStr !== "None") {
+          savedBlocks = JSON.parse(savedSetupContextStr);
+      }
+  } catch (e) {
+      console.error("복원 데이터 파싱 에러:", e);
+  }
+
+  // 모달 제어 및 렌더링 로직
+  document.addEventListener("DOMContentLoaded", function() {
+      const loadModal = document.getElementById('load-blocks-modal');
+      const btnOpenLoad = document.getElementById('btn-open-load-modal');
+      const btnCloseLoad = document.getElementById('btn-close-load-modal');
+      const btnCancelLoad = document.getElementById('btn-cancel-load');
+      const btnApplyLoad = document.getElementById('btn-apply-load');
+      const blocksListContainer = document.getElementById('saved-blocks-list');
+
+      // 모달 열기 & 카드 렌더링
+      btnOpenLoad.addEventListener('click', () => {
+          if (savedBlocks.length === 0) {
+              blocksListContainer.innerHTML = `<div class="text-center text-slate-400 py-8 font-medium">최근 저장된 블록 데이터가 없습니다.</div>`;
+              btnApplyLoad.disabled = true;
+              btnApplyLoad.classList.add('opacity-50', 'cursor-not-allowed');
+          } else {
+              btnApplyLoad.disabled = false;
+              btnApplyLoad.classList.remove('opacity-50', 'cursor-not-allowed');
+              
+              // 가로형 카드 렌더링
+              blocksListContainer.innerHTML = savedBlocks.map((block, index) => {
+                  const situation = block.situation || "상황 미입력";
+                  const climax = block.climax || "절정 미입력";
+                  return `
+                  <div class="bg-white border border-slate-200 rounded-lg p-4 shadow-sm flex flex-col gap-2">
+                    <div class="flex items-center gap-2 mb-1">
+                      <span class="bg-indigo-100 text-indigo-700 text-xs font-bold px-2 py-1 rounded">블록 ${index + 1}</span>
+                    </div>
+                    <p class="text-sm text-slate-700"><strong class="text-slate-500">상황:</strong> ${situation}</p>
+                    <p class="text-sm text-slate-700 line-clamp-1"><strong class="text-slate-500">절정:</strong> ${climax}</p>
+                  </div>`;
+              }).join('');
+          }
+          loadModal.classList.remove('hidden');
+      });
+
+      const closeLoadModal = () => loadModal.classList.add('hidden');
+      btnCloseLoad.addEventListener('click', closeLoadModal);
+      btnCancelLoad.addEventListener('click', closeLoadModal);
+
+      // 전체 폼에 덮어쓰기 로직
+      btnApplyLoad.addEventListener('click', async () => {
+          if (!confirm("현재 작성 중인 폼 내용이 모두 지워지고 저장된 데이터로 덮어씌워집니다. 진행하시겠습니까?")) return;
+          
+          closeLoadModal();
+          
+          // 1번 블록 채우기
+          fillBlockData(1, savedBlocks[0]);
+
+          // 나머지 블록 동적 생성 및 채우기
+          for (let i = 1; i < savedBlocks.length; i++) {
+              const btn = document.getElementById("add-block-btn");
+              btn.setAttribute("hx-get", "{% url 'add_block' %}?index=" + (i + 1));
+              
+              await new Promise(resolve => {
+                  htmx.process(btn);
+                  htmx.trigger(btn, "click");
+                  document.body.addEventListener("htmx:afterSettle", function onSettle() {
+                      document.body.removeEventListener("htmx:afterSettle", onSettle);
+                      resolve();
+                  }, { once: true });
+              });
+              fillBlockData(i + 1, savedBlocks[i]);
+          }
+          updateBlockNumbers(); 
+      });
+  });
+
+  // 폼 빈칸 채우기 헬퍼 함수
+  function fillBlockData(blockNum, data) {
+      if (!data) return;
+      for (const [key, value] of Object.entries(data)) {
+          const fieldName = `${key}_${blockNum}`;
+          const inputEl = document.querySelector(`[name="${fieldName}"]`);
+          if (inputEl) inputEl.value = value;
+      }
+  }
+
   const verifyApiUrl = "{% if novel %}{% url 'verify_keywords_api' novel.id %}{% endif %}";
 
   document.body.addEventListener("htmx:afterSwap", function (event) {

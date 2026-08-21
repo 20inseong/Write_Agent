@@ -202,17 +202,23 @@ def save_temp_draft(request: HttpRequest) -> JsonResponse:
         # 프론트에서 넘어온 JSON 데이터 파싱 (안전하게 get으로 추출)
         ai_content = data.get('ai_content', '')
         user_content = data.get('user_content', '')
-        setup_context = data.get('setup_context', '')
+        setup_context = data.get('setup_context', None)
+
+        # 무조건 업데이트할 필드만 먼저 세팅
+        defaults_data = {
+            'ai_draft_content': ai_content,
+            'user_content': user_content,
+        }
+
+        # 에디터에서 setup_context 데이터를 명시적으로 보냈을 때만 업데이트 (안 보냈으면 원본 보존)
+        if setup_context: 
+            defaults_data['setup_context'] = setup_context
 
         # 현재 로그인한 작가 기준으로 임시저장 데이터를 덮어쓰거나 신규 생성
         draft, created = TemporaryDraft.objects.update_or_create(
             author=request.user,
             is_deleted=False,
-            defaults={
-                'ai_draft_content': ai_content,
-                'user_content': user_content,
-                'setup_context': setup_context,
-            }
+            defaults=defaults_data
         )
 
         local_time = timezone.localtime(draft.updated_at)

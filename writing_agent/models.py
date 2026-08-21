@@ -170,3 +170,17 @@ class TemporaryDraft(models.Model):
 
     def __str__(self):
         return f"임시저장본 - {self.author.username} ({self.updated_at.strftime('%m/%d %H:%M')})"
+
+class BlockHistorySnapshot(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    
+    # 특정 시점의 블록 설정 데이터 (JSON 형식 문자열로 저장)
+    setup_context = models.TextField(blank=True, null=True)
+    
+    # 스냅샷 생성 시간 (타임라인 정렬용)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_deleted = models.BooleanField(default=False, verbose_name="삭제 여부")
+
+    def __str__(self):
+        return f"블록 스냅샷 - {self.author.username} ({self.created_at.strftime('%m/%d %H:%M')})"
