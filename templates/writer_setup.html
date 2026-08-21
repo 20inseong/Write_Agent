@@ -160,10 +160,12 @@
 <script>
   // 💡 백엔드에서 넘겨준 폼 복원 데이터 파싱 (editor_views.py 수정 필수)
   const savedSetupContextStr = `{{ saved_setup_context|escapejs }}`;
-  let savedBlocks = [];
+  let snapshotsList = [];
+  let selectedSnapshotContext = null; // 선택된 스냅샷의 컨텍스트를 담을 변수
+
   try {
       if (savedSetupContextStr && savedSetupContextStr !== "{}" && savedSetupContextStr !== "None") {
-          savedBlocks = JSON.parse(savedSetupContextStr);
+          snapshotsList = JSON.parse(savedSetupContextStr);
       }
   } catch (e) {
       console.error("복원 데이터 파싱 에러:", e);
@@ -180,27 +182,42 @@
 
       // 모달 열기 & 카드 렌더링
       btnOpenLoad.addEventListener('click', () => {
-          if (savedBlocks.length === 0) {
+          if (snapshotsList.length === 0) {
               blocksListContainer.innerHTML = `<div class="text-center text-slate-400 py-8 font-medium">최근 저장된 블록 데이터가 없습니다.</div>`;
               btnApplyLoad.disabled = true;
               btnApplyLoad.classList.add('opacity-50', 'cursor-not-allowed');
           } else {
-              btnApplyLoad.disabled = false;
-              btnApplyLoad.classList.remove('opacity-50', 'cursor-not-allowed');
+              btnApplyLoad.disabled = true; // 스냅샷을 선택하기 전까진 비활성화
+              btnApplyLoad.classList.add('opacity-50', 'cursor-not-allowed');
               
-              // 가로형 카드 렌더링
-              blocksListContainer.innerHTML = savedBlocks.map((block, index) => {
-                  const situation = block.situation || "상황 미입력";
-                  const climax = block.climax || "절정 미입력";
+              // 시간대별 라디오 버튼 리스트 렌더링
+              blocksListContainer.innerHTML = snapshotsList.map((snap, index) => {
+                  const blockCount = snap.context.length;
+                  const firstBlockSituation = blockCount > 0 ? (snap.context[0].situation || "상황 미입력") : "빈 블록";
+                  
                   return `
-                  <div class="bg-white border border-slate-200 rounded-lg p-4 shadow-sm flex flex-col gap-2">
-                    <div class="flex items-center gap-2 mb-1">
-                      <span class="bg-indigo-100 text-indigo-700 text-xs font-bold px-2 py-1 rounded">블록 ${index + 1}</span>
+                  <label class="cursor-pointer block mb-3">
+                    <input type="radio" name="snapshot_select" value="${index}" class="peer sr-only">
+                    <div class="bg-white border-2 border-slate-200 rounded-lg p-4 shadow-sm transition hover:border-indigo-300 peer-checked:border-indigo-600 peer-checked:bg-indigo-50 peer-checked:ring-1 peer-checked:ring-indigo-600 flex flex-col gap-2">
+                      <div class="flex justify-between items-center mb-1">
+                        <span class="text-indigo-700 font-bold text-sm">📅 ${snap.created_at} 저장본</span>
+                        <span class="text-xs font-semibold bg-slate-100 text-slate-500 px-2 py-1 rounded">총 ${blockCount}개 블록</span>
+                      </div>
+                      <p class="text-sm text-slate-700 line-clamp-1"><strong class="text-slate-500">시작 상황:</strong> ${firstBlockSituation}</p>
                     </div>
-                    <p class="text-sm text-slate-700"><strong class="text-slate-500">상황:</strong> ${situation}</p>
-                    <p class="text-sm text-slate-700 line-clamp-1"><strong class="text-slate-500">절정:</strong> ${climax}</p>
-                  </div>`;
+                  </label>`;
               }).join('');
+
+              // 라디오 버튼을 클릭하면 해당 스냅샷 데이터를 장전하고 덮어쓰기 버튼 활성화
+              const radios = blocksListContainer.querySelectorAll('input[name="snapshot_select"]');
+              radios.forEach(radio => {
+                  radio.addEventListener('change', (e) => {
+                      const selectedIdx = e.target.value;
+                      selectedSnapshotContext = snapshotsList[selectedIdx].context;
+                      btnApplyLoad.disabled = false;
+                      btnApplyLoad.classList.remove('opacity-50', 'cursor-not-allowed');
+                  });
+              });
           }
           loadModal.classList.remove('hidden');
       });
@@ -211,15 +228,16 @@
 
       // 전체 폼에 덮어쓰기 로직
       btnApplyLoad.addEventListener('click', async () => {
-          if (!confirm("현재 작성 중인 폼 내용이 모두 지워지고 저장된 데이터로 덮어씌워집니다. 진행하시겠습니까?")) return;
+        if (!selectedSnapshotContext) return;
+        if (!confirm("현재 작성 중인 폼 내용이 모두 지워지고 선택한 저장된 데이터로 덮어씌워집니다. 진행하시겠습니까?")) return;
           
           closeLoadModal();
           
           // 1번 블록 채우기
-          fillBlockData(1, savedBlocks[0]);
+          fillBlockData(1, selectedSnapshotContext[0]);
 
           // 나머지 블록 동적 생성 및 채우기
-          for (let i = 1; i < savedBlocks.length; i++) {
+          for (let i = 1; i < selectedSnapshotContext.length; i++) {
               const btn = document.getElementById("add-block-btn");
               btn.setAttribute("hx-get", "{% url 'add_block' %}?index=" + (i + 1));
               
@@ -231,9 +249,9 @@
                       resolve();
                   }, { once: true });
               });
-              fillBlockData(i + 1, savedBlocks[i]);
+              fillBlockData(i + 1, selectedSnapshotContext[i]);
           }
-          updateBlockNumbers(); 
+          updateBlockNumbers();
       });
   });
 
