@@ -61,8 +61,14 @@
             맞춤법 검수
           </button>
           <!-- AI 일치도 전용 패널 -->
-          <div class="flex items-center rounded-lg bg-slate-50 px-4 py-2 border border-slate-200">
-            <span id="similarity-display" class="text-sm font-bold text-slate-600">AI 초안 일치도: 0%</span>
+          <div class="flex flex-col justify-center rounded-lg bg-slate-50 px-4 py-1.5 border border-slate-200 w-48">
+            <div class="flex justify-between items-center mb-1">
+              <span class="text-xs font-semibold text-slate-500">AI 의존도</span>
+              <span id="similarity-display" class="text-xs font-bold text-green-600">0%</span>
+            </div>
+            <div class="w-full bg-slate-200 rounded-full h-2 shadow-inner overflow-hidden">
+              <div id="similarity-gauge" class="bg-green-500 h-2 rounded-full transition-all duration-500 ease-out" style="width: 0%"></div>
+            </div>
           </div>
         </div>
       </footer>
@@ -125,6 +131,7 @@
     var counter = document.getElementById("char-count");
     
     const similarityDisplay = document.getElementById("similarity-display");
+    const similarityGauge = document.getElementById("similarity-gauge");
     const emptyNotice = document.getElementById("empty-ai-notice"); // 모달 쪽에 있던 걸 위로 올림
     const maxChars = 5000;
 
@@ -163,8 +170,11 @@
 
       // AI 초안이 없거나 작가가 아직 글을 안 썼으면 0%
       if (aiBigrams.size === 0 || userText.trim().length === 0) {
-        similarityDisplay.textContent = `AI 의존도: 0%`;
-        similarityDisplay.className = "text-sm font-bold text-slate-600";
+        // similarityDisplay.textContent = `AI 의존도: 0%`;
+        similarityDisplay.className = "text-xs font-bold text-green-600";
+        similarityDisplay.textContent = "0%";
+        similarityGauge.style.width = "0%";
+        similarityGauge.className = "bg-green-500 h-2 rounded-full transition-all duration-500 ease-out";
         return;
       }
 
@@ -187,17 +197,24 @@
         percent = Math.round((intersectionCount / unionCount) * 100);
       }
 
-      // 스코어링에 따른 UI 색상 변경 (60% 초과면 위험, 그 이하면 안전)
+      // 스코어링에 따른 UI 색상 및 게이지 바 변경 (수정된 부분)
+      let textColorClass = "text-green-600";
+      let gaugeColorClass = "bg-green-500";
+
       if (percent > 60) {
-        similarityDisplay.className = "text-sm font-bold text-red-500";
+        textColorClass = "text-red-500";
+        gaugeColorClass = "bg-red-500";
       } else if (percent > 20) {
-        similarityDisplay.className = "text-sm font-bold text-amber-500"; // 스위트스팟 (주황색)
-      } else {
-        similarityDisplay.className = "text-sm font-bold text-green-600"; // 오리지널리티 확보 (녹색)
+        textColorClass = "text-amber-500";
+        gaugeColorClass = "bg-amber-500";
       }
+
+      // 화면에 퍼센트 및 애니메이션 렌더링
+      similarityDisplay.className = `text-xs font-bold ${textColorClass}`;
+      similarityDisplay.textContent = `${percent}%`;
       
-      // 화면에 퍼센트 렌더링
-      similarityDisplay.textContent = `AI 의존도: ${percent}%`;
+      similarityGauge.style.width = `${percent}%`;
+      similarityGauge.className = `h-2 rounded-full transition-all duration-500 ease-out ${gaugeColorClass}`;
     }
 
     let debounceTimer;

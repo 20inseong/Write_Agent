@@ -7,6 +7,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404
 from google import genai
 from google.genai import types
+from django.utils import timezone
 
 from ..models import Novel, StoryElement, CharacterDetail, FactionDetail, ItemDetail, LocationDetail, EventDetail, TemporaryDraft
 from ..prompt import oov_extract_prompt, prompt_labels, system_prompt
@@ -210,10 +211,12 @@ def save_temp_draft(request: HttpRequest) -> JsonResponse:
             }
         )
 
+        local_time = timezone.localtime(draft.updated_at)
+
         return JsonResponse({
             'status': 'success',
             'message': '임시 저장 완료',
-            'updated_at': draft.updated_at.strftime('%H:%M:%S')
+            'updated_at': local_time.strftime('%H:%M:%S')
         })
 
     except Exception as e:
