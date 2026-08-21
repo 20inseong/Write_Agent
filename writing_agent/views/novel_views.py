@@ -4,10 +4,6 @@ from django.contrib.auth.decorators import login_required
 from ..models import Novel
 
 @login_required
-def dashboard(request: HttpRequest) -> HttpResponse:
-    return render(request, "dashboard.html")
-
-@login_required
 def world_list_view(request):
     my_novels = Novel.objects.filter(author=request.user)
     return render(request, "world_list.html", {"novels": my_novels})

@@ -2,6 +2,8 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render, redirect
 from django.contrib.auth import login
 from ..forms import CustomUserCreationForm
+from django.contrib.auth.decorators import login_required
+from ..models import TemporaryDraft
 
 def home(request: HttpRequest) -> HttpResponse:
     if request.user.is_authenticated:
@@ -21,3 +23,20 @@ def signup_view(request):
         form = CustomUserCreationForm()
     
     return render(request, 'signup.html', {'form': form})
+
+@login_required
+def dashboard(request: HttpRequest) -> HttpResponse:
+    has_temp_draft = False
+    draft_updated_at = ""
+
+    # 현재 로그인한 작가의 임시 저장 데이터가 있는지 조회 (가장 최근 것 1개)
+    draft = TemporaryDraft.objects.filter(author=request.user, is_deleted=False).order_by('-updated_at').first()
+    
+    if draft and (draft.user_content or draft.ai_draft_content):
+        has_temp_draft = True
+        draft_updated_at = draft.updated_at.strftime('%m/%d %H:%M')
+
+    return render(request, "dashboard.html", {
+        "has_temp_draft": has_temp_draft,
+        "draft_updated_at": draft_updated_at
+    })

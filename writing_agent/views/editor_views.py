@@ -9,7 +9,7 @@ from google import genai
 from google.genai import types
 import re
 
-from ..models import Novel, StoryElement, CharacterDetail, FactionDetail, ItemDetail, LocationDetail, EventDetail
+from ..models import Novel, StoryElement, CharacterDetail, FactionDetail, ItemDetail, LocationDetail, EventDetail, TemporaryDraft
 from ..prompt import prompt_labels, system_prompt
 from ..utils import generate_saju_prompt
 
@@ -41,6 +41,15 @@ def add_block(request: HttpRequest) -> HttpResponse:
 def editor(request: HttpRequest, novel_id: int = None) -> HttpResponse:
     novel = get_object_or_404(Novel, id=novel_id, author=request.user) if novel_id else None
     ai_draft_text = ""
+    user_draft_text = ""
+
+    # [이어쓰기 복원 로직] 대시보드에서 '?mode=continue'로 진입했을 때
+    mode = request.GET.get('mode')
+    if mode == 'continue':
+        draft = TemporaryDraft.objects.filter(author=request.user, is_deleted=False).first()
+        if draft:
+            ai_draft_text = draft.ai_draft_content or ""
+            user_draft_text = draft.user_content or ""
     
     if request.method == "POST":
         action = request.POST.get("unregistered_action", "")
@@ -295,5 +304,8 @@ def editor(request: HttpRequest, novel_id: int = None) -> HttpResponse:
     return render(
         request, 
         "editor.html", 
-        {"ai_content": ai_draft_text} 
+        {
+            "ai_content": ai_draft_text,
+            "user_content": user_draft_text
+        } 
     )

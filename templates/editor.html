@@ -20,14 +20,13 @@
     >
       <h2 class="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-400">AI 초안 뷰어</h2>
       <article class="space-y-4 text-sm leading-relaxed">
-        {% if ai_content %}
-          <!-- AI 생성 결과 출력 (linebreaksbr 필터로 줄바꿈 유지) -->
-          <div id="ai-draft-text" class="text-slate-200">
+        <div id="ai-draft-text" class="text-slate-200">
+          {% if ai_content %}
             {{ ai_content|linebreaksbr }}
-          </div>
-        {% else %}
-          <!-- 결과가 없을 때 보여줄 안내 텍스트 -->
-          <p class="text-slate-500 italic">
+          {% endif %}
+        </div>
+        {% if not ai_content %}
+          <p id="empty-ai-notice" class="text-slate-500 italic">
             블록 세팅 화면에서 데이터를 전송하면, 이 영역에 AI가 작성한 초안이 나타납니다.
           </p>
         {% endif %}
@@ -41,11 +40,20 @@
           id="main-editor"
           class="min-h-0 w-full flex-1 resize-none rounded-lg border border-slate-300 p-4 text-base leading-relaxed focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
           placeholder="여기에 소설을 작성하세요…"
-        ></textarea>
+        >{{ user_content }}</textarea>
       </div>
       <footer class="flex shrink-0 flex-wrap items-center gap-3 border-t border-slate-200 px-4 py-3">
         <span id="char-count" class="text-sm tabular-nums text-slate-600">현재 글자수 / 5000자</span>
-        <div class="ml-auto flex flex-wrap gap-2">
+        <div class="ml-auto flex flex-wrap gap-2 items-center">
+          <span id="save-status" class="text-sm font-medium text-slate-500 mr-2 transition-colors"></span>
+          <!-- 수동 저장 버튼 -->
+          <button
+            type="button"
+            id="manual-save-btn"
+            class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          >
+            수동 저장
+          </button>
           <button
             type="button"
             class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
@@ -115,34 +123,37 @@
   (function () {
     var editor = document.getElementById("main-editor");
     var counter = document.getElementById("char-count");
-    const aiDraftElement = document.querySelector(".ai-draft-pane article");
+    
     const similarityDisplay = document.getElementById("similarity-display");
+    const emptyNotice = document.getElementById("empty-ai-notice"); // 모달 쪽에 있던 걸 위로 올림
     const maxChars = 5000;
 
     // N-gram (2어절) 생성기
     function getBigrams(text) {
-      // 특수기호를 지우고 순수 한글/영문/숫자만 남김
       const cleanText = text.replace(/[.,!?\"\'\n\r]/g, " ").trim();
-      
-      // 띄어쓰기 기준으로 단어 분리
       const words = cleanText.split(/\s+/).filter(w => w.length > 0);
-      const bigrams = new Set(); // 중복 방지를 위해 Set 사용
+      const bigrams = new Set();
       
-      // 글이 너무 짧아 1단어밖에 없으면 그냥 반환
       if (words.length < 2) {
         if (words.length === 1) bigrams.add(words[0]);
         return bigrams;
       }
       
-      // i번째 단어와 i+1번째 단어를 묶어서 집합에 추가
       for (let i = 0; i < words.length - 1; i++) {
         bigrams.add(words[i] + " " + words[i + 1]);
       }
       return bigrams;
     }
 
-    // AI 초안 텍스트를 가져와서 미리 바이그램으로 만들어둠
-    const aiText = aiDraftElement ? aiDraftElement.innerText || "" : "";
+    // AI 초안 텍스트를 가져와서 미리 바이그램으로 만들어둠 (안전하게 참조)
+    const aiDraftTextEl = document.getElementById("ai-draft-text");
+    let aiText = aiDraftTextEl ? aiDraftTextEl.innerText : "";
+    
+    // 안내 문구가 텍스트에 섞여 들어가는 것 방지
+    if (emptyNotice && aiText.includes(emptyNotice.innerText)) {
+      aiText = aiText.replace(emptyNotice.innerText, "").trim();
+    }
+    
     const aiBigrams = getBigrams(aiText);
 
     // 실시간 입력 감지 및 유사도 계산
@@ -189,9 +200,68 @@
       similarityDisplay.textContent = `AI 의존도: ${percent}%`;
     }
 
-    // 에디터에 타이핑(input) 할 때마다 검사 실행
-    editor.addEventListener("input", handleInput);
-    handleInput();
+    let debounceTimer;
+    const saveStatus = document.getElementById("save-status");
+    const manualSaveBtn = document.getElementById("manual-save-btn");
+
+    // 서버로 데이터 비동기 전송
+    async function saveDraftToServer() {
+      saveStatus.textContent = "저장 중...";
+      saveStatus.className = "text-sm font-medium text-indigo-500 mr-2 transition-colors";
+      
+      const userContent = editor.value;
+      const aiDraftEl = document.getElementById("ai-draft-text");
+      const aiContent = aiDraftEl ? aiDraftEl.innerText : "";
+      
+      try {
+        const res = await fetch("/api/save_draft/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "X-CSRFToken": getCookie("csrftoken") },
+          body: JSON.stringify({
+            ai_content: aiContent,
+            user_content: userContent,
+            setup_context: JSON.stringify(currentBlockData || {})
+          })
+        });
+        const data = await res.json();
+        if(data.status === "success") {
+          saveStatus.textContent = `저장 완료 (${data.updated_at})`;
+          saveStatus.className = "text-sm font-medium text-emerald-500 mr-2 transition-colors";
+        }
+      } catch(e) {
+        saveStatus.textContent = "저장 실패";
+        saveStatus.className = "text-sm font-medium text-red-500 mr-2 transition-colors";
+      }
+    }
+
+    // 에디터 타이핑 감지 (디바운싱 1.5초 적용)
+    editor.addEventListener("input", () => {
+      handleInput(); // 기존 유사도 계산 실행
+      clearTimeout(debounceTimer);
+      
+      saveStatus.textContent = "입력 중...";
+      saveStatus.className = "text-sm font-medium text-slate-500 mr-2 transition-colors";
+      
+      // 1.5초 동안 입력이 없으면 자동 저장 실행
+      debounceTimer = setTimeout(saveDraftToServer, 1500);
+    });
+
+    // 수동 저장 버튼 클릭 이벤트
+    manualSaveBtn.addEventListener("click", () => {
+      clearTimeout(debounceTimer);
+      saveDraftToServer();
+    });
+
+    // 작가 편의용 단축키 (Ctrl+S / Cmd+S)
+    editor.addEventListener("keydown", (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        clearTimeout(debounceTimer);
+        saveDraftToServer();
+      }
+    });
+
+    handleInput(); // 최초 진입 시 유사도 계산 1회 실행
 
     // 모달 제어 및 비동기(Fetch) 추가 로직
     const addBlockModal = document.getElementById("add-block-modal");
@@ -200,7 +270,6 @@
     const closeModalBtn = document.getElementById("close-modal-btn");
     const addBlockForm = document.getElementById("add-block-form");
     const submitBlockBtn = document.getElementById("submit-block-btn");
-    const emptyNotice = document.getElementById("empty-ai-notice");
 
     const btnAddStub = document.getElementById("btn-add-stub");
     

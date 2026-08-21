@@ -217,5 +217,6 @@ def save_temp_draft(request: HttpRequest) -> JsonResponse:
         })
 
     except Exception as e:
-        # 에러 발생 시 상태 코드 400으로 실패 응답 반환
+        # 에러 발생
+        print(f"🚨 임시 저장 백엔드 에러 원인: {e}")
         return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
