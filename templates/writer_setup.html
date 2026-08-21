@@ -58,52 +58,59 @@
   </div>
 
   <!-- 미등록 키워드 확인 모달창 -->
-  <div id="keyword-modal" class="fixed inset-0 z-50 flex hidden items-center justify-center bg-slate-900/50 backdrop-blur-sm transition-opacity">
-    <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
-      <div class="mb-4 flex items-center gap-3">
+  <div id="keyword-modal" class="fixed inset-0 z-50 flex hidden items-center justify-center bg-slate-900/50 backdrop-blur-sm transition-opacity p-4">
+    <!-- 모달 전체 높이: 최대 90vh -->
+    <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl flex flex-col h-auto max-h-[90vh]">
+      
+      <!-- 상단 헤더 -->
+      <div class="mb-4 flex items-center gap-3 shrink-0">
         <span class="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 text-amber-600 font-bold">!</span>
         <h3 class="text-lg font-bold text-slate-800">새로운 고유명사 감지</h3>
       </div>
       
-      <p class="text-sm text-slate-600 mb-4">
-        세계관 DB에 없는 <strong class="text-indigo-600">새로운 키워드</strong>가 발견되었습니다. 파란색 단어를 클릭하면 즉시 설정을 작성할 수 있습니다.
-      </p>
-      
-      <!-- 키워드 리스트 (클릭형 뱃지) -->
-      <div class="mb-4 rounded-lg bg-slate-50 p-4 border border-slate-200">
-        <div id="unregistered-list" class="flex flex-wrap gap-2">
-          <!-- JS로 동적 생성되는 하이퍼링크 뱃지들 -->
-        </div>
-      </div>
-
-      <!-- 즉석 작성 미니 팝업 (기본 숨김) -->
-      <div id="quick-setup-box" class="mb-6 hidden rounded-lg border border-indigo-200 bg-indigo-50 p-4 shadow-inner max-h-[60vh] overflow-y-auto">
-        <h4 class="mb-4 text-sm font-bold text-indigo-800"><span id="quick-setup-word"></span> 설정 상세 작성</h4>
+      <!-- [첫 번째 스크롤] 모달 중간 영역 전체 스크롤 -->
+      <div class="overflow-y-auto flex-1 pr-2 space-y-4 custom-scrollbar min-h-0">
+        <p class="text-sm text-slate-600">
+          세계관 DB에 없는 <strong class="text-indigo-600">새로운 키워드</strong>가 발견되었습니다. 파란색 단어를 클릭하면 즉시 설정을 작성할 수 있습니다.
+        </p>
         
-        <div class="mb-4">
-          <label class="block text-xs font-semibold text-slate-600 mb-1">카테고리 선택</label>
-          <select id="quick-category" class="w-full rounded-md border-slate-300 text-sm focus:ring-indigo-500 focus:border-indigo-500">
-            <option value="CHARACTER">인물</option>
-            <option value="FACTION">단체</option>
-            <option value="ITEM">물건</option>
-            <option value="LOCATION">장소</option>
-            <option value="EVENT">사건</option>
-            <option value="CONCEPT">개념/기타</option>
-          </select>
+        <!-- 키워드 리스트 -->
+        <div class="rounded-lg bg-slate-50 p-4 border border-slate-200 shrink-0">
+          <div id="unregistered-list" class="flex flex-wrap gap-2">
+            <!-- JS로 동적 생성되는 하이퍼링크 뱃지들 -->
+          </div>
         </div>
 
-        <!-- 🌟 자바스크립트가 폼을 꽂아 넣을 빈 상자 (이게 없어서 에러가 났던 것!) -->
-        <div id="dynamic-form-container" class="space-y-4">
-            <!-- (기본 렌더링은 JS가 담당) -->
-        </div>
+        <!-- 즉석 작성 미니 팝업 -->
+        <div id="quick-setup-box" class="hidden rounded-lg border border-indigo-200 bg-indigo-50 p-4 shadow-inner shrink-0">
+          <h4 class="mb-4 text-sm font-bold text-indigo-800"><span id="quick-setup-word"></span> 설정 상세 작성</h4>
+          
+          <div class="mb-4">
+            <label class="block text-xs font-semibold text-slate-600 mb-1">카테고리 선택</label>
+            <select id="quick-category" class="w-full rounded-md border-slate-300 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+              <option value="CHARACTER">인물</option>
+              <option value="FACTION">단체</option>
+              <option value="ITEM">물건</option>
+              <option value="LOCATION">장소</option>
+              <option value="EVENT">사건</option>
+              <option value="CONCEPT">개념/기타</option>
+            </select>
+          </div>
 
-        <div class="mt-6 flex justify-end gap-2 border-t border-indigo-200 pt-3">
-          <button type="button" id="btn-quick-cancel" class="text-xs text-slate-500 hover:text-slate-700 font-medium">취소</button>
-          <button type="button" id="btn-quick-save" class="rounded bg-indigo-600 px-4 py-1.5 text-xs text-white hover:bg-indigo-700 font-bold shadow-sm">저장 완료</button>
+          <!-- [두 번째 스크롤] 폼 영역만 max-h-[40vh] 지정, 독립 스크롤 생성 -->
+          <div id="dynamic-form-container" class="space-y-4 max-h-[40vh] overflow-y-auto pr-2 custom-scrollbar">
+              <!-- (기본 렌더링은 JS가 담당) -->
+          </div>
+
+          <div class="mt-6 flex justify-end gap-2 border-t border-indigo-200 pt-3 shrink-0">
+            <button type="button" id="btn-quick-cancel" class="text-xs text-slate-500 hover:text-slate-700 font-medium">취소</button>
+            <button type="button" id="btn-quick-save" class="rounded bg-indigo-600 px-4 py-1.5 text-xs text-white hover:bg-indigo-700 font-bold shadow-sm">저장 완료</button>
+          </div>
         </div>
       </div>
       
-      <div class="flex flex-col gap-2">
+      <!-- 하단 버튼 영역-->
+      <div class="flex flex-col gap-2 mt-4 pt-4 border-t border-slate-100 shrink-0">
         <button id="btn-modal-manual-complete" type="button" disabled class="w-full rounded-lg bg-indigo-600 py-3 text-sm font-semibold text-white opacity-50 cursor-not-allowed transition hover:bg-indigo-700">
           📝 모든 설정 작성 완료 후 소설 생성하기
         </button>
@@ -434,11 +441,13 @@ document.addEventListener("DOMContentLoaded", function() {
       }
     });
 
-    // 🌟 키워드 뱃지 렌더링 함수
+    // 키워드 뱃지 렌더링 함수
     function renderKeywordBadges() {
       unregisteredList.innerHTML = '';
+      let filledCount = 0;
       currentKeywords.forEach(kw => {
-        const isDone = manualData[kw] !== undefined; 
+        const isDone = manualData[kw] !== undefined;
+        if (isDone) filledCount++;
         
         const badge = document.createElement('button');
         badge.type = 'button';
@@ -454,16 +463,18 @@ document.addEventListener("DOMContentLoaded", function() {
         unregisteredList.appendChild(badge);
       });
 
-      const allDone = currentKeywords.every(kw => manualData[kw] !== undefined);
+      // const allDone = currentKeywords.every(kw => manualData[kw] !== undefined);
       const btnManualComplete = document.getElementById('btn-modal-manual-complete');
       
-      if (allDone) {
+      if (filledCount > 0) {
         btnManualComplete.disabled = false;
-        btnManualComplete.classList.remove('opacity-50', 'cursor-not-allowed', 'hidden'); // 💡 hidden 추가
+        btnManualComplete.classList.remove('opacity-50', 'cursor-not-allowed', 'hidden');
+        btnManualComplete.innerText = `📝 작성 완료한 ${filledCount}개 설정 저장 후 소설 생성`;
       } else {
         btnManualComplete.disabled = true;
         btnManualComplete.classList.add('opacity-50', 'cursor-not-allowed');
-        btnManualComplete.classList.remove('hidden'); // 💡 버튼 자체는 화면에 계속 보이도록 유지
+        btnManualComplete.classList.remove('hidden');
+        btnManualComplete.innerText = `📝 하나 이상 설정을 작성하면 활성화됩니다`;
       }
     }
 
@@ -509,47 +520,41 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 
     // 4. 모달창 액션 버튼 이벤트들
-    btnManualComplete.addEventListener('click', () => {
-      inputAction.value = 'manual';
-      keywordModal.classList.add('hidden');
-      isVerified = true;
-      showLoading('작성하신 설정을 저장하고 본문을 집필합니다...');
-      form.submit();
-    });
-    document.getElementById('btn-modal-ai').addEventListener('click', () => {
-      inputAction.value = 'ai_auto';
-      keywordModal.classList.add('hidden');
-      isVerified = true;
-      showLoading('남은 단어를 AI가 창작하여 등록하고 본문을 집필합니다...');
-      form.submit();
-    });
+    if (btnManualComplete) {
+      btnManualComplete.addEventListener('click', () => {
+        inputAction.value = 'manual';
+        keywordModal.classList.add('hidden');
+        isVerified = true;
+        showLoading('작성하신 부분 설정을 저장하고 본문을 집필합니다...');
+        form.submit();
+      });
+    }
 
-    document.getElementById('btn-modal-stub').addEventListener('click', () => {
-      inputAction.value = 'stub';
-      keywordModal.classList.add('hidden');
-      isVerified = true;
-      showLoading('남은 단어의 뼈대를 생성하고 본문을 집필합니다...');
-      form.submit();
-    });
-
-    document.getElementById('btn-modal-ignore').addEventListener('click', () => {
-      inputAction.value = 'ignore';
-      keywordModal.classList.add('hidden');
-      isVerified = true;
-      showLoading('키워드를 무시하고 본문을 집필합니다...');
-      form.submit();
-    });
-    document.getElementById('btn-modal-cancel-generation').addEventListener('click', () => {
-      keywordModal.classList.add('hidden'); // 모달창 닫기
-      quickSetupBox.classList.add('hidden'); // 즉석 작성 팝업도 켜져 있었다면 닫기
-      
-      // 메인 생성 버튼 원상 복구
-      submitBtn.disabled = false;
-      submitBtn.innerText = originalBtnText;
-      
-      // 플래그 및 임시 데이터 초기화
-      isVerified = false;
-    });
+    const btnModalIgnore = document.getElementById('btn-modal-ignore');
+    if (btnModalIgnore) {
+      btnModalIgnore.addEventListener('click', () => {
+        inputAction.value = 'ignore';
+        keywordModal.classList.add('hidden');
+        isVerified = true;
+        showLoading('키워드를 무시하고 본문을 집필합니다...');
+        form.submit();
+      });
+    }
+    
+    const btnModalCancel = document.getElementById('btn-modal-cancel-generation');
+    if (btnModalCancel) {
+      btnModalCancel.addEventListener('click', () => {
+        keywordModal.classList.add('hidden'); // 모달창 닫기
+        if (quickSetupBox) quickSetupBox.classList.add('hidden'); // 즉석 작성 팝업 닫기
+        
+        // 메인 생성 버튼 원상 복구
+        submitBtn.disabled = false;
+        submitBtn.innerText = originalBtnText;
+        
+        // 플래그 및 임시 데이터 초기화
+        isVerified = false;
+      });
+    }
   });
 </script>
 {% endblock %}

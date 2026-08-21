@@ -179,8 +179,12 @@ def generate_single_block_api(request: HttpRequest, novel_id: int = None) -> Jso
                 temperature=0.7,
             )
         )
+        # AI 원본 응답에서 불필요한 머리말('장면 1' 등)을 제거
+        ai_raw_output = response.text.strip()
+        pure_scene_text = clean_generated_text(ai_raw_output)
         
-        return JsonResponse({"status": "success", "scene_text": response.text.strip()})
+        # 정제된 텍스트(pure_scene_text)를 프론트엔드로 반환
+        return JsonResponse({"status": "success", "scene_text": pure_scene_text})
 
     except Exception as e:
         error_msg = str(e).upper()
@@ -223,3 +227,14 @@ def save_temp_draft(request: HttpRequest) -> JsonResponse:
         # 에러 발생
         print(f"🚨 임시 저장 백엔드 에러 원인: {e}")
         return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+def clean_generated_text(text: str) -> str:
+    """AI가 서두에 출력한 장면 번호, 소제목, 불필요한 마크다운 헤더를 정제하는 함수"""
+    if not text:
+        return ""
+    
+    # 1. 서두에 등장하는 [장면 1], 장면 1:, # 장면 1, 1장 등 패턴 제거
+    pattern = r'^(?:#+\s*)?(?:\[\s*)?(?:장면|Scene|제\s*\d+\s*장|\d+\s*장)(?:\s*\d+)?(?:\s*[:\-\]\.\)]*)?\s*\n*'
+    cleaned_text = re.sub(pattern, '', text.strip(), flags=re.IGNORECASE)
+    
+    return cleaned_text.strip()
