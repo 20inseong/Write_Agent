@@ -284,7 +284,12 @@ def editor(request: HttpRequest, novel_id: int = None) -> HttpResponse:
                 )
                 
                 scene_text = response.text.strip()
-                final_draft += f"\n\n=== [장면 {i}] ===\n\n{scene_text}"
+
+                mid_point = len(scene_text) // 2
+                if len(scene_text) > 100 and scene_text[:mid_point].strip() == scene_text[mid_point:].strip():
+                    scene_text = scene_text[:mid_point].strip()
+
+                final_draft += f"\n\n=== [블록] ===\n\n{scene_text}"
                 
                 previous_scene_summary = scene_text[-150:] if len(scene_text) > 150 else scene_text
                 
@@ -294,10 +299,10 @@ def editor(request: HttpRequest, novel_id: int = None) -> HttpResponse:
                 
                 # 503 과부하 에러인 경우 부드러운 안내 메시지 출력
                 if "503" in error_msg or "UNAVAILABLE" in error_msg:
-                    final_draft += f"\n\n [장면 {i}] 현재 AI 서버에 접속자가 많아 일시적인 지연이 발생하고 있습니다. 1~2분 뒤에 다시 [생성] 버튼을 눌러주세요.\n"
+                    final_draft += f"\n\n 현재 AI 서버에 접속자가 많아 일시적인 지연이 발생하고 있습니다. 1~2분 뒤에 다시 시도해주세요.\n"
                 else:
                     # 그 외 알 수 없는 에러
-                    final_draft += f"\n\n [장면 {i}] 초안을 생성하는 도중 알 수 없는 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.\n"
+                    final_draft += f"\n\n 초안을 생성하는 도중 알 수 없는 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.\n"
 
         ai_draft_text = final_draft.strip()
 
