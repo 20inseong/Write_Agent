@@ -9,7 +9,7 @@ from google import genai
 from google.genai import types
 import re
 
-from ..models import Novel, StoryElement, CharacterDetail, FactionDetail, ItemDetail, LocationDetail, EventDetail, TemporaryDraft
+from ..models import Novel, StoryElement, CharacterDetail, FactionDetail, ItemDetail, LocationDetail, EventDetail, TemporaryDraft, BlockHistorySnapshot
 from ..prompt import prompt_labels, system_prompt
 from ..utils import generate_saju_prompt
 
@@ -19,9 +19,21 @@ load_dotenv()
 def writer_setup(request: HttpRequest, novel_id: int = None) -> HttpResponse:
     novel = get_object_or_404(Novel, id=novel_id, author=request.user) if novel_id else None
 
-    # 임시 저장된 셋업 데이터 가져오기
-    draft = TemporaryDraft.objects.filter(author=request.user, is_deleted=False).first()
-    saved_setup_context = draft.setup_context if draft else "{}"
+    # 최근 10개의 블록 스냅샷을 시간 역순으로 가져와 JSON 형태로 변환
+    snapshots = BlockHistorySnapshot.objects.filter(author=request.user, is_deleted=False).order_by('-created_at')[:10]
+    snapshots_data = []
+    for snap in snapshots:
+        try:
+            context_data = json.loads(snap.setup_context) if snap.setup_context else []
+            snapshots_data.append({
+                "id": str(snap.id),
+                "created_at": snap.created_at.strftime('%m/%d %H:%M'),
+                "context": context_data
+            })
+        except json.JSONDecodeError:
+            continue
+    saved_setup_context = json.dumps(snapshots_data, ensure_ascii=False)
+
     return render(
         request, 
         "writer_setup.html", 
@@ -183,12 +195,10 @@ def editor(request: HttpRequest, novel_id: int = None) -> HttpResponse:
         sorted_blocks = [block_data[num] for num in sorted(block_data.keys(), key=int)]
 
         try:
-            TemporaryDraft.objects.update_or_create(
+            # 단일 덮어쓰기 대신 과거 기록을 계속 누적하는 방식으로 변경
+            BlockHistorySnapshot.objects.create(
                 author=request.user,
-                is_deleted=False,
-                defaults={
-                    'setup_context': json.dumps(sorted_blocks, ensure_ascii=False)
-                }
+                setup_context=json.dumps(sorted_blocks, ensure_ascii=False)
             )
         except Exception as e:
             print(f"🚨 블록 선제 저장 실패: {e}")
