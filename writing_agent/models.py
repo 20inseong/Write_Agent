@@ -127,3 +127,21 @@ class EventDetail(models.Model):
 
     def __str__(self):
         return f"{self.element.name}의 상세 설정"
+
+class TemporaryDraft(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    
+    # UI 시야에서는 감추고 DB에만 보관할 초기 블록 설정 컨텍스트
+    setup_context = models.TextField(blank=True, null=True)
+
+    ai_draft_content = models.TextField(blank=True, null=True)
+    user_content = models.TextField(blank=True, null=True)
+    
+    # 작가 실수 방지용 논리적 삭제
+    is_deleted = models.BooleanField(default=False)
+    # 자동/수동 저장 시간 기록
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"임시저장본 - {self.author.username} ({self.updated_at.strftime('%m/%d %H:%M')})"

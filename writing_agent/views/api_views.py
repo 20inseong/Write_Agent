@@ -8,7 +8,7 @@ from django.shortcuts import get_object_or_404
 from google import genai
 from google.genai import types
 
-from ..models import Novel, StoryElement, CharacterDetail, FactionDetail, ItemDetail, LocationDetail, EventDetail
+from ..models import Novel, StoryElement, CharacterDetail, FactionDetail, ItemDetail, LocationDetail, EventDetail, TemporaryDraft
 from ..prompt import oov_extract_prompt, prompt_labels, system_prompt
 from ..utils import generate_saju_prompt
 
@@ -186,3 +186,36 @@ def generate_single_block_api(request: HttpRequest, novel_id: int = None) -> Jso
         if "503" in error_msg or "UNAVAILABLE" in error_msg:
             return JsonResponse({"status": "error", "message": "현재 AI 서버 접속자가 많습니다. 1~2분 뒤 다시 시도해주세요."})
         return JsonResponse({"status": "error", "message": str(e)}, status=500)
+
+
+@login_required
+@require_POST
+def save_temp_draft(request: HttpRequest) -> JsonResponse:
+    try:
+        data = json.loads(request.body)
+        
+        # 프론트에서 넘어온 JSON 데이터 파싱 (안전하게 get으로 추출)
+        ai_content = data.get('ai_content', '')
+        user_content = data.get('user_content', '')
+        setup_context = data.get('setup_context', '')
+
+        # 현재 로그인한 작가 기준으로 임시저장 데이터를 덮어쓰거나 신규 생성
+        draft, created = TemporaryDraft.objects.update_or_create(
+            author=request.user,
+            is_deleted=False,
+            defaults={
+                'ai_draft_content': ai_content,
+                'user_content': user_content,
+                'setup_context': setup_context,
+            }
+        )
+
+        return JsonResponse({
+            'status': 'success',
+            'message': '임시 저장 완료',
+            'updated_at': draft.updated_at.strftime('%H:%M:%S')
+        })
+
+    except Exception as e:
+        # 에러 발생 시 상태 코드 400으로 실패 응답 반환
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)

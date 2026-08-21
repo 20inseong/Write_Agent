@@ -31,5 +31,7 @@ urlpatterns = [
 
     path('world/create/', views.create_novel, name='create_novel'),
     path('world/delete/<int:novel_id>/', views.delete_novel, name='delete_novel'),
-    path('world/element_action/<int:novel_id>/<str:category>/', views.world_element_bulk_action, name='world_element_bulk_action'),    
+    path('world/element_action/<int:novel_id>/<str:category>/', views.world_element_bulk_action, name='world_element_bulk_action'),
+
+    path('api/save_draft/', views.save_temp_draft, name='save_temp_draft'),
 ]
