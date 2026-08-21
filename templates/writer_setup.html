@@ -88,6 +88,7 @@
             <option value="ITEM">물건</option>
             <option value="LOCATION">장소</option>
             <option value="EVENT">사건</option>
+            <option value="CONCEPT">개념/기타</option>
           </select>
         </div>
 
@@ -356,6 +357,14 @@ document.addEventListener("DOMContentLoaded", function() {
               <div><label class="block text-xs font-semibold text-slate-600 mb-1">관련 주체</label><input type="text" name="participants" class="quick-input w-full px-2 py-1.5 text-xs border border-slate-300 rounded"></div>                
               <div><label class="block text-xs font-semibold text-slate-600 mb-1">발발 원인 및 전개</label><textarea name="trigger" rows="2" class="quick-input w-full px-2 py-1 border border-slate-300 rounded text-xs"></textarea></div>
               <div><label class="block text-xs font-semibold text-slate-600 mb-1">파급력 및 결과</label><textarea name="impact" rows="2" class="quick-input w-full px-2 py-1 border border-slate-300 rounded text-xs"></textarea></div>
+              ${otherDetailsHtml}
+          `;
+      } else if (categoryValue === 'CONCEPT') {
+          return `
+              <div><label class="block text-xs font-semibold text-slate-600 mb-1">개념 분류 (무공, 법칙 등)</label><input type="text" name="concept_type" class="quick-input w-full px-2 py-1.5 text-xs border border-slate-300 rounded"></div>
+              <div><label class="block text-xs font-semibold text-slate-600 mb-1">상세 설명 및 원리</label><textarea name="description" rows="2" class="quick-input w-full px-2 py-1 border border-slate-300 rounded text-xs"></textarea></div>
+              <div><label class="block text-xs font-semibold text-slate-600 mb-1">적용 범위 및 한계</label><textarea name="application" rows="2" class="quick-input w-full px-2 py-1 border border-slate-300 rounded text-xs"></textarea></div>
+              <div><label class="block text-xs font-semibold text-slate-600 mb-1">부작용 및 리스크</label><textarea name="side_effects" rows="2" class="quick-input w-full px-2 py-1 border border-slate-300 rounded text-xs"></textarea></div>
               ${otherDetailsHtml}
           `;
       }

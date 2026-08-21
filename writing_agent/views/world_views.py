@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse
-from ..models import Novel, StoryElement, CharacterDetail, FactionDetail, ItemDetail, LocationDetail, EventDetail
+from ..models import Novel, StoryElement, CharacterDetail, FactionDetail, ItemDetail, LocationDetail, EventDetail, ConceptDetail
 
 @login_required
 def world_category_view(request, novel_id):
@@ -17,7 +17,8 @@ def world_element_list_view(request, novel_id, category):
         '단체': 'FACTION',
         '물건': 'ITEM',
         '장소': 'LOCATION',
-        '사건': 'EVENT'
+        '사건': 'EVENT',
+        '개념': 'CONCEPT'
     }
     db_category = category_map.get(category, 'CHARACTER') # 기본값은 인물
 
@@ -101,6 +102,15 @@ def world_element_list_view(request, novel_id, category):
                     impact=request.POST.get("impact", ""),
                     other_details=other_details
                 )
+            elif db_category == 'CONCEPT':
+                ConceptDetail.objects.create(
+                    element=new_element,
+                    concept_type=request.POST.get("concept_type", ""),
+                    description=request.POST.get("description", ""),
+                    application=request.POST.get("application", ""),
+                    side_effects=request.POST.get("side_effects", ""),
+                    other_details=other_details
+                )
                 
             # 새로고침
             return redirect(f"{reverse('world_element_list', args=[novel.id, category])}?folder={current_folder}")
@@ -147,6 +157,8 @@ def world_element_detail_view(request, novel_id, category, element_id):
         detail = element.location_detail
     elif element.category == 'EVENT' and hasattr(element, 'event_detail'):
         detail = element.event_detail
+    elif element.category == 'CONCEPT' and hasattr(element, 'concept_detail'):
+        detail = element.concept_detail
     
     # POST 요청: '저장하기' 버튼을 눌렀을 때 데이터 업데이트
     if request.method == "POST":
@@ -205,6 +217,14 @@ def world_element_detail_view(request, novel_id, category, element_id):
             detail.participants = request.POST.get("participants", detail.participants)
             detail.trigger = request.POST.get("trigger", detail.trigger)
             detail.impact = request.POST.get("impact", detail.impact)
+            detail.other_details = request.POST.get("other_details", detail.other_details)
+            detail.save()
+
+        elif element.category == 'CONCEPT' and detail:
+            detail.concept_type = request.POST.get("concept_type", detail.concept_type)
+            detail.description = request.POST.get("description", detail.description)
+            detail.application = request.POST.get("application", detail.application)
+            detail.side_effects = request.POST.get("side_effects", detail.side_effects)
             detail.other_details = request.POST.get("other_details", detail.other_details)
             detail.save()
 
@@ -307,6 +327,11 @@ def world_element_bulk_action(request, novel_id, category):
                     d = el.event_detail
                     EventDetail.objects.create(
                         element=new_el, timeline=d.timeline, participants=d.participants, trigger=d.trigger, impact=d.impact
+                    )
+                elif el.category == 'CONCEPT' and hasattr(el, 'concept_detail'):
+                    d = el.concept_detail
+                    ConceptDetail.objects.create(
+                        element=new_el, concept_type=d.concept_type, description=d.description, application=d.application, side_effects=d.side_effects
                     )
 
     # 작업 완료 후, 머물러 있던 현재 폴더 위치로 돌아감

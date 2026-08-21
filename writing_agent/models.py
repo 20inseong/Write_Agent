@@ -31,6 +31,7 @@ class StoryElement(models.Model):
         ('ITEM', '물건'),
         ('LOCATION', '장소'),
         ('EVENT', '사건'),
+        ('CONCEPT', '개념/기타'),
     )
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -84,6 +85,9 @@ class CharacterDetail(models.Model):
 
     other_details = models.TextField(blank=True, null=True, verbose_name="기타 사항")
 
+    def __str__(self):
+        return f"{self.element.name}의 인물 설정"
+
 
 # 단체 및 세력 (FACTION)
 class FactionDetail(models.Model):
@@ -96,6 +100,9 @@ class FactionDetail(models.Model):
     assets = models.TextField(blank=True, verbose_name="고유 기술, 자산 및 세력 규모")
     other_details = models.TextField(blank=True, null=True, verbose_name="기타 사항")
 
+    def __str__(self):
+        return f"{self.element.name}의 단체 설정"
+
 # 물건 (ITEM)
 class ItemDetail(models.Model):
     element = models.OneToOneField(StoryElement, on_delete=models.CASCADE, related_name='item_detail')
@@ -106,6 +113,9 @@ class ItemDetail(models.Model):
     origin = models.TextField(blank=True, verbose_name="기원 및 이전 주인의 이야기")
     other_details = models.TextField(blank=True, null=True, verbose_name="기타 사항")
 
+    def __str__(self):
+        return f"{self.element.name}의 물건 설정"
+
 # 장소 (LOCATION)
 class LocationDetail(models.Model):
     element = models.OneToOneField(StoryElement, on_delete=models.CASCADE, related_name='location_detail')
@@ -115,6 +125,9 @@ class LocationDetail(models.Model):
     significance = models.TextField(blank=True, verbose_name="스토리적 상징성 (랜드마크)")
     hidden_history = models.TextField(blank=True, verbose_name="장소에 얽힌 숨겨진 역사")
     other_details = models.TextField(blank=True, null=True, verbose_name="기타 사항")
+
+    def __str__(self):
+        return f"{self.element.name}의 장소 설정"
 
 # 사건 (EVENT)
 class EventDetail(models.Model):
@@ -127,6 +140,18 @@ class EventDetail(models.Model):
 
     def __str__(self):
         return f"{self.element.name}의 상세 설정"
+
+# 개념 및 기타 (CONCEPT)
+class ConceptDetail(models.Model):
+    element = models.OneToOneField(StoryElement, on_delete=models.CASCADE, related_name='concept_detail')
+    concept_type = models.CharField(max_length=100, blank=True, verbose_name="개념 분류 (무공, 법칙, 이능 등)")
+    description = models.TextField(blank=True, verbose_name="상세 설명 및 원리")
+    application = models.TextField(blank=True, verbose_name="적용 범위 및 한계")
+    side_effects = models.TextField(blank=True, verbose_name="부작용 및 리스크")
+    other_details = models.TextField(blank=True, null=True, verbose_name="기타 사항")
+
+    def __str__(self):
+        return f"{self.element.name}의 개념 설정"
 
 class TemporaryDraft(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

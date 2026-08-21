@@ -264,7 +264,7 @@ def editor(request: HttpRequest, novel_id: int = None) -> HttpResponse:
                     instructions_list.append(f"- {label}: {v.strip()}")
             
             block_instructions = "\n".join(instructions_list)
-            user_prompt = f"다음 지시사항에 따라 [장면 {i}]을(를) 작성해 주세요:\n{block_instructions}"
+            user_prompt = f"다음 지시사항에 따라 글을 작성해 주세요:\n{block_instructions}"
             
             # 이전 장면이 있다면 문맥 릴레이 (마지막 150자)
             if previous_scene_summary:

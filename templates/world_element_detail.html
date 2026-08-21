@@ -116,6 +116,15 @@
           </div>
           <div><h3 class="text-lg font-bold text-slate-800 mb-2 border-l-4 border-purple-500 pl-3">발발 원인 및 전개 흐름</h3><p class="whitespace-pre-wrap leading-relaxed view-mode">{{ detail.trigger|default:"설정된 내용이 없습니다." }}</p><textarea name="trigger" rows="3" class="edit-mode hidden w-full p-3 border rounded-lg">{{ detail.trigger }}</textarea></div>
           <div><h3 class="text-lg font-bold text-slate-800 mb-2 border-l-4 border-purple-500 pl-3">세계관에 미친 파급력</h3><p class="whitespace-pre-wrap leading-relaxed view-mode">{{ detail.impact|default:"설정된 내용이 없습니다." }}</p><textarea name="impact" rows="3" class="edit-mode hidden w-full p-3 border rounded-lg">{{ detail.impact }}</textarea></div>
+
+          {% elif element.category == 'CONCEPT' %}
+          <!-- 6. 개념/기타 데이터 -->
+          <div class="bg-slate-50 p-6 rounded-xl border border-slate-100 mb-6">
+            <span class="block text-xs font-bold text-slate-400 mb-1">개념 분류</span><p class="font-medium view-mode">{{ detail.concept_type|default:"-" }}</p><input type="text" name="concept_type" value="{{ detail.concept_type }}" class="edit-mode hidden w-full px-2 py-1 text-sm border rounded">
+          </div>
+          <div><h3 class="text-lg font-bold text-slate-800 mb-2 border-l-4 border-pink-500 pl-3">상세 설명 및 원리</h3><p class="whitespace-pre-wrap leading-relaxed view-mode">{{ detail.description|default:"설정된 내용이 없습니다." }}</p><textarea name="description" rows="3" class="edit-mode hidden w-full p-3 border rounded-lg">{{ detail.description }}</textarea></div>
+          <div><h3 class="text-lg font-bold text-slate-800 mb-2 border-l-4 border-pink-500 pl-3">적용 범위 및 한계</h3><p class="whitespace-pre-wrap leading-relaxed view-mode">{{ detail.application|default:"설정된 내용이 없습니다." }}</p><textarea name="application" rows="3" class="edit-mode hidden w-full p-3 border rounded-lg">{{ detail.application }}</textarea></div>
+          <div><h3 class="text-lg font-bold text-slate-800 mb-2 border-l-4 border-pink-500 pl-3">부작용 및 리스크</h3><p class="whitespace-pre-wrap leading-relaxed view-mode">{{ detail.side_effects|default:"설정된 내용이 없습니다." }}</p><textarea name="side_effects" rows="3" class="edit-mode hidden w-full p-3 border rounded-lg">{{ detail.side_effects }}</textarea></div>
           {% endif %}
 
           <div class="mt-12 pt-8 border-t-2 border-slate-200 border-dashed pb-16">
