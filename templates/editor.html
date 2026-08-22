@@ -130,6 +130,26 @@
     </div>
   </div>
 </div>
+<div id="episode-save-modal" class="hidden fixed inset-0 z-[70] flex items-center justify-center bg-slate-900 bg-opacity-60 backdrop-blur-sm transition-opacity">
+  <div class="bg-white rounded-xl w-full max-w-md p-6 shadow-2xl">
+    <h3 class="text-lg font-bold text-slate-800 mb-2">✨ 에피소드 완성</h3>
+    <p class="text-sm text-slate-600 mb-5">수고하셨습니다! 완성된 본문을 저장할 제목을 입력해 주세요.</p>
+    
+    <form id="episode-save-form" class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">에피소드 제목</label>
+        <input type="text" id="episode-title-input" class="w-full rounded-lg border border-slate-300 p-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" placeholder="예: 1화 - 서막이 오르다" required>
+      </div>
+      
+      <div class="mt-6 flex justify-end gap-2">
+        <button type="button" id="close-episode-modal-btn" class="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors">취소</button>
+        <button type="submit" id="submit-episode-btn" class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition-colors shadow">
+          저장 후 대시보드로 이동
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
 {% endblock %}
 
 {% block extra_scripts %}
@@ -296,19 +316,89 @@
       }
     });
 
-    // 작성 완료 버튼 로직 (향후 DB 이관 API와 연결할 자리)
     const completeWritingBtn = document.getElementById("complete-writing-btn");
+    const episodeSaveModal = document.getElementById("episode-save-modal");
+    const closeEpisodeModalBtn = document.getElementById("close-episode-modal-btn");
+    const episodeSaveForm = document.getElementById("episode-save-form");
+    const submitEpisodeBtn = document.getElementById("submit-episode-btn");
+    const episodeTitleInput = document.getElementById("episode-title-input");
+
+    // '작성 완료' 버튼 클릭 시 모달 열기
     completeWritingBtn.addEventListener("click", async () => {
-      if(confirm("소설 작성을 완료하고 대시보드로 돌아가시겠습니까?\n(현재 작성된 내용이 최종 저장됩니다)")) {
-        completeWritingBtn.disabled = true;
-        completeWritingBtn.innerText = "저장 중...";
+      if (!editor.value.trim()) {
+        alert("저장할 본문 내용이 없습니다.");
+        return;
+      }
+      
+      // 모달 열기 전, 최신 텍스트 보호를 위해 수동 저장 1회 실행
+      clearTimeout(debounceTimer);
+      await saveDraftToServer();
+      
+      episodeTitleInput.value = ""; // 초기화
+      episodeSaveModal.classList.remove("hidden");
+    });
+
+    // 취소 버튼
+    closeEpisodeModalBtn.addEventListener("click", () => {
+      episodeSaveModal.classList.add("hidden");
+    });
+
+    // 폼 제출 (진짜 DB로 전송)
+    episodeSaveForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      
+      const title = episodeTitleInput.value.trim();
+      const content = editor.value;
+      
+      // AI 일치도에서 숫자만 추출 (예: "45%" -> 45)
+      let similarityScore = 0;
+      const simText = similarityDisplay.textContent;
+      const match = simText.match(/\d+/);
+      if (match) {
+        similarityScore = parseInt(match[0], 10);
+      }
+
+      // URL 주소창에서 novel_id 추출 (기존 로직 활용)
+      let apiUrl = "/api/save-episode/"; // 자유 창작용 기본 주소
+      
+      const pathSegments = window.location.pathname.split('/').filter(Boolean);
+      if (pathSegments.length >= 2 && pathSegments[0] === 'editor' && !isNaN(pathSegments[1])) {
+          const novelId = pathSegments[1];
+          apiUrl = `/api/save-episode/${novelId}/`; // 세계관 모드일 때의 주소
+      }
+
+      submitEpisodeBtn.disabled = true;
+      submitEpisodeBtn.innerText = "저장 중... ⏳";
+
+      try {
+        // 방금 만든 백엔드 API로 POST 전송
+        const response = await fetch(apiUrl, {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json", 
+            "X-CSRFToken": getCookie("csrftoken") 
+          },
+          body: JSON.stringify({
+            title: title,
+            content: content,
+            ai_similarity: similarityScore
+          })
+        });
         
-        // 안전하게 마지막 수동 저장 통신 한 번 더 실행
-        clearTimeout(debounceTimer);
-        await saveDraftToServer();
+        const result = await response.json();
         
-        // 저장이 끝나면 대시보드로 복귀
-        window.location.href = "{% url 'dashboard' %}";
+        if (result.status === "success") {
+          // 저장 성공 시 대시보드로 리다이렉트
+          window.location.href = "{% url 'dashboard' %}";
+        } else {
+          alert("저장 실패: " + result.message);
+          submitEpisodeBtn.disabled = false;
+          submitEpisodeBtn.innerText = "저장 후 대시보드로 이동";
+        }
+      } catch (error) {
+        alert("서버 통신 중 오류가 발생했습니다.");
+        submitEpisodeBtn.disabled = false;
+        submitEpisodeBtn.innerText = "저장 후 대시보드로 이동";
       }
     });
 
