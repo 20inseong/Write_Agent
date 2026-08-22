@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}{{ element.name }} · {{ novel.title }} · 글쓰기 에이전트{% endblock %}
 
@@ -148,27 +149,5 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<script>
-  document.addEventListener("DOMContentLoaded", function() {
-    const toggleBtn = document.getElementById('btn-edit-toggle');
-    
-    toggleBtn.addEventListener('click', function(e) {
-      // 1. 버튼이 '수정하기' 일 때 누르면 에디터 모드로 변환
-      if (toggleBtn.innerText === '수정하기') {
-        e.preventDefault(); // 기본 제출 방지
-        
-        // 뷰 모드 숨기고, 에디트 모드 보이기
-        document.querySelectorAll('.view-mode').forEach(el => el.classList.add('hidden'));
-        document.querySelectorAll('.edit-mode').forEach(el => el.classList.remove('hidden'));
-        
-        // 버튼 디자인을 '저장하기' (강조색)으로 변경
-        toggleBtn.innerText = '저장하기';
-        toggleBtn.type = 'submit'; // 다음 번 누를 땐 폼이 제출되도록 타입 변경
-        toggleBtn.classList.remove('bg-slate-100', 'text-slate-600', 'hover:bg-slate-200');
-        toggleBtn.classList.add('bg-indigo-600', 'text-white', 'hover:bg-indigo-700', 'shadow-md');
-      }
-      // 2. 버튼이 '저장하기' 일 때 누르면 기본 동작(submit) 작동하여 저장됨
-    });
-  });
-</script>
+<script src="{% static 'js/world/world_element.js' %}"></script>
 {% endblock %}
