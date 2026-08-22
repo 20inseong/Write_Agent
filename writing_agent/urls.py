@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from .views import api_views
 
 
 urlpatterns = [
@@ -34,4 +35,6 @@ urlpatterns = [
     path('world/element_action/<int:novel_id>/<str:category>/', views.world_element_bulk_action, name='world_element_bulk_action'),
 
     path('api/save_draft/', views.save_temp_draft, name='save_temp_draft'),
+    path('api/save-episode/', api_views.save_episode_api, name='save_episode_api_free'),
+    path('api/save-episode/<int:novel_id>/', api_views.save_episode_api, name='save_episode_api'),
 ]

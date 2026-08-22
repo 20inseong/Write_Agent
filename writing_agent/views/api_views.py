@@ -9,7 +9,7 @@ from google import genai
 from google.genai import types
 from django.utils import timezone
 
-from ..models import Novel, StoryElement, CharacterDetail, FactionDetail, ItemDetail, LocationDetail, EventDetail, TemporaryDraft
+from ..models import Novel, StoryElement, CharacterDetail, FactionDetail, ItemDetail, LocationDetail, EventDetail, TemporaryDraft, Episode
 from ..prompt import oov_extract_prompt, prompt_labels, system_prompt
 from ..utils import generate_saju_prompt
 
@@ -239,8 +239,56 @@ def clean_generated_text(text: str) -> str:
     if not text:
         return ""
     
-    # 1. 서두에 등장하는 [장면 1], 장면 1:, # 장면 1, 1장 등 패턴 제거
+    # 서두에 등장하는 [장면 1], 장면 1:, # 장면 1, 1장 등 패턴 제거
     pattern = r'^(?:#+\s*)?(?:\[\s*)?(?:장면|Scene|제\s*\d+\s*장|\d+\s*장)(?:\s*\d+)?(?:\s*[:\-\]\.\)]*)?\s*\n*'
     cleaned_text = re.sub(pattern, '', text.strip(), flags=re.IGNORECASE)
     
     return cleaned_text.strip()
+
+@login_required
+@require_POST
+def save_episode_api(request: HttpRequest, novel_id: int = None) -> JsonResponse:
+    # 💡 모든 로직을 try 안으로 넣어서, 에러가 나더라도 브라우저가 원인을 알 수 있게 함!
+    try:
+        if novel_id:
+            novel = get_object_or_404(Novel, id=novel_id, author=request.user)
+        else:
+            # 존재하지 않는 필드(description 등) 때문에 에러가 나지 않도록 가장 기본 필드만 사용
+            novel, created = Novel.objects.get_or_create(
+                author=request.user,
+                title="자유 창작 노트 (기본)"
+            )
+        
+        data = json.loads(request.body)
+        title = data.get('title', '새 에피소드')
+        content = data.get('content', '')
+        
+        # 일치도(%)가 문자열로 넘어올 수 있으니 정수형으로 안전하게 변환
+        try:
+            ai_similarity = int(data.get('ai_similarity', 0))
+        except ValueError:
+            ai_similarity = 0
+
+        # 메인 테이블에 완성본 최종 저장
+        Episode.objects.create(
+            author=request.user,
+            novel=novel,
+            title=title,
+            content=content,
+            ai_similarity=ai_similarity
+        )
+
+        # 완성본 저장이 끝났으므로 기존 임시저장(TemporaryDraft) 내용 비우기
+        draft = TemporaryDraft.objects.filter(author=request.user, is_deleted=False).first()
+        if draft:
+            draft.ai_draft_content = ""
+            draft.user_content = ""
+            draft.setup_context = "{}"
+            draft.save()
+
+        return JsonResponse({'status': 'success', 'message': '성공적으로 저장되었습니다.'})
+
+    except Exception as e:
+        # 에러가 나도 서버가 죽지 않고 구체적인 이유를 프론트로 전달해 줌
+        print(f"🚨 완성본 저장 API 에러: {e}")
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)

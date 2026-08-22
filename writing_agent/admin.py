@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models import (
     AuthorProfile, Novel, StoryElement,
-    CharacterDetail, FactionDetail, ItemDetail, LocationDetail, EventDetail
+    CharacterDetail, FactionDetail, ItemDetail, LocationDetail, EventDetail, Episode
 )
 
 @admin.register(AuthorProfile)
@@ -66,6 +66,20 @@ class StoryElementAdmin(admin.ModelAdmin):
         LocationDetailInline,
         EventDetailInline
     ]
+
+@admin.register(Episode)
+class EpisodeAdmin(admin.ModelAdmin):
+    # 어드민 리스트 화면에서 보여줄 칼럼들
+    list_display = ('title', 'novel', 'author', 'ai_similarity', 'created_at', 'is_deleted')
+    
+    # 우측 필터 사이드바 (소설별, 작가별, 삭제여부별로 모아보기)
+    list_filter = ('novel', 'author', 'is_deleted')
+    
+    # 상단 검색창 (제목이나 본문 내용으로 검색 가능)
+    search_fields = ('title', 'content')
+    
+    # 어드민에서 함부로 수정하면 안 되는 필드 (읽기 전용)
+    readonly_fields = ('id', 'created_at', 'updated_at')
 
 # 새로 만든 5개의 세부 확장 테이블도 어드민에서 관리할 수 있도록 기본 등록
 admin.site.register(CharacterDetail)
