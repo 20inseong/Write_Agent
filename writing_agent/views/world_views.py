@@ -336,4 +336,3 @@ def world_element_bulk_action(request, novel_id, category):
 
     # 작업 완료 후, 머물러 있던 현재 폴더 위치로 돌아감
     return redirect(f"{reverse('world_element_list', args=[novel.id, category])}?folder={current_folder}")
-
