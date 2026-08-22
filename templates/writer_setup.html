@@ -193,7 +193,10 @@
               // 시간대별 라디오 버튼 리스트 렌더링
               blocksListContainer.innerHTML = snapshotsList.map((snap, index) => {
                   const blockCount = snap.context.length;
-                  const firstBlockSituation = blockCount > 0 ? (snap.context[0].situation || "상황 미입력") : "빈 블록";
+                  const ctx = blockCount > 0 ? snap.context[0] : {};
+
+                  const firstBlockKeyword = ctx.characters || "키워드 미입력";
+                  const firstBlockSituation = ctx.situation || ctx.start || "상황 미입력";
                   
                   return `
                   <label class="cursor-pointer block mb-3">
@@ -203,7 +206,8 @@
                         <span class="text-indigo-700 font-bold text-sm">📅 ${snap.created_at} 저장본</span>
                         <span class="text-xs font-semibold bg-slate-100 text-slate-500 px-2 py-1 rounded">총 ${blockCount}개 블록</span>
                       </div>
-                      <p class="text-sm text-slate-700 line-clamp-1"><strong class="text-slate-500">시작 상황:</strong> ${firstBlockSituation}</p>
+                      <p class="text-sm text-slate-700 line-clamp-1"><strong class="text-slate-500">키워드:</strong> ${firstBlockKeyword}</p>
+                      <p class="text-sm text-slate-700 line-clamp-2"><strong class="text-slate-500">상황:</strong> ${firstBlockSituation}</p>
                     </div>
                   </label>`;
               }).join('');
@@ -228,8 +232,11 @@
 
       // 전체 폼에 덮어쓰기 로직
       btnApplyLoad.addEventListener('click', async () => {
-        if (!selectedSnapshotContext) return;
-        if (!confirm("현재 작성 중인 폼 내용이 모두 지워지고 선택한 저장된 데이터로 덮어씌워집니다. 진행하시겠습니까?")) return;
+        if (!selectedSnapshotContext) {
+            alert("먼저 복원할 저장본을 리스트에서 선택해주세요!");
+            return;
+        }
+        if (!confirm("현재 작성 중인 폼 내용이 초기화되고 선택한 데이터로 덮어씌워집니다. 진행하시겠습니까?")) return;
           
           closeLoadModal();
           
