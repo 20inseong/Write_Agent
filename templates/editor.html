@@ -35,9 +35,16 @@
 
     <section class="flex w-1/2 flex-col bg-white" aria-label="메인 에디터">
       <div class="flex min-h-0 flex-1 flex-col p-4">
-        <label for="main-editor" class="mb-2 text-sm font-medium text-slate-700">메인 에디터</label>
+        <div class="mb-2 flex items-center justify-between">
+          <label for="main-editor" class="text-sm font-medium text-slate-700">메인 에디터</label>
+          <button id="spell-check-btn" class="text-xs font-semibold text-slate-500 hover:text-indigo-600 transition-colors flex items-center gap-1" title="텍스트 복사 후 검사기 새 창 열기">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+            <span>맞춤법 검사기 ↗</span>
+          </button>
+        </div>
         <textarea
           id="main-editor"
+          spellcheck="true"
           class="min-h-0 w-full flex-1 resize-none rounded-lg border border-slate-300 p-4 text-base leading-relaxed focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
           placeholder="여기에 소설을 작성하세요…"
         >{{ user_content }}</textarea>
@@ -56,9 +63,10 @@
           </button>
           <button
             type="button"
-            class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            id="complete-writing-btn"
+            class="rounded-lg bg-indigo-600 px-6 py-2 text-sm font-bold text-white shadow hover:bg-indigo-700 transition-colors"
           >
-            맞춤법 검수
+            작성 완료
           </button>
           <!-- AI 일치도 전용 패널 -->
           <div class="flex flex-col justify-center rounded-lg bg-slate-50 px-4 py-1.5 border border-slate-200 w-48">
@@ -267,6 +275,41 @@
     manualSaveBtn.addEventListener("click", () => {
       clearTimeout(debounceTimer);
       saveDraftToServer();
+    });
+
+    // 맞춤법 검사기 열기 (클립보드 복사 후 새 창)
+    const spellCheckBtn = document.getElementById("spell-check-btn");
+    spellCheckBtn.addEventListener("click", async () => {
+      const textToCopy = editor.value;
+      if (!textToCopy.trim()) {
+        alert("에디터에 검사할 텍스트가 없습니다.");
+        return;
+      }
+      try {
+        await navigator.clipboard.writeText(textToCopy);
+        alert("텍스트가 클립보드에 복사되었습니다!\n열리는 검사기 창에서 붙여넣기(Ctrl+V) 해주세요.");
+        // 부산대 한국어 맞춤법 검사기 띄우기
+        window.open("https://search.naver.com/search.naver?query=맞춤법검사기", "_blank");
+      } catch (err) {
+        alert("복사에 실패했습니다. 에디터에서 직접 복사 후 검사해주세요.");
+        window.open("https://search.naver.com/search.naver?query=맞춤법검사기", "_blank");
+      }
+    });
+
+    // 작성 완료 버튼 로직 (향후 DB 이관 API와 연결할 자리)
+    const completeWritingBtn = document.getElementById("complete-writing-btn");
+    completeWritingBtn.addEventListener("click", async () => {
+      if(confirm("소설 작성을 완료하고 대시보드로 돌아가시겠습니까?\n(현재 작성된 내용이 최종 저장됩니다)")) {
+        completeWritingBtn.disabled = true;
+        completeWritingBtn.innerText = "저장 중...";
+        
+        // 안전하게 마지막 수동 저장 통신 한 번 더 실행
+        clearTimeout(debounceTimer);
+        await saveDraftToServer();
+        
+        // 저장이 끝나면 대시보드로 복귀
+        window.location.href = "{% url 'dashboard' %}";
+      }
     });
 
     // 작가 편의용 단축키 (Ctrl+S / Cmd+S)
