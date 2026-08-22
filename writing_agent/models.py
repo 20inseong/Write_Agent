@@ -184,3 +184,28 @@ class BlockHistorySnapshot(models.Model):
 
     def __str__(self):
         return f"블록 스냅샷 - {self.author.username} ({self.created_at.strftime('%m/%d %H:%M')})"
+
+
+# 완성된 소설 본문을 저장하는 메인 테이블
+class Episode(models.Model):
+    # IDOR 방지용 예측 불가능한 기본키
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    # 데이터 격리를 위한 작가 및 소설 종속성 설정
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='episodes')
+    novel = models.ForeignKey(Novel, on_delete=models.CASCADE, related_name='episodes')
+    
+    # 에피소드 기본 정보 (제목 및 본문)
+    title = models.CharField(max_length=200, verbose_name="에피소드 제목", default="새 에피소드")
+    content = models.TextField(verbose_name="완성된 소설 본문")
+    
+    # 게이미피케이션(뱃지/랭킹) 활용을 위한 저장 당시의 AI 일치도 기록
+    ai_similarity = models.PositiveIntegerField(default=0, verbose_name="AI 일치도(%)")
+    
+    # 작가 실수 방지용 논리적 삭제
+    is_deleted = models.BooleanField(default=False, verbose_name="삭제 여부")
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"[{self.novel.title}] {self.title}"
