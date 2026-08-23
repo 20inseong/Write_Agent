@@ -18,17 +18,38 @@
         <div class="flex gap-6">
             <!-- 좌측 패널: 소설 프로젝트 목록 -->
             <div class="w-1/4 border-r border-gray-200 pr-4">
-                <h3 class="text-lg font-bold mb-4 text-gray-700">진행 중인 세계관</h3>
+                <h3 class="text-lg font-bold mb-4 text-gray-700">작성한 에피소드 & 블록</h3>
                 <ul class="space-y-2">
-                    {% for novel in novels %}
+                    <!-- 1. 전체 보기 -->
                     <li>
-                        <!-- 차후 클릭 시 우측 패널의 데이터가 필터링되도록 JS 처리 필요 -->
-                        <button class="w-full text-left px-4 py-2 rounded bg-gray-50 hover:bg-purple-100 transition">
-                            {{ novel.title }}
+                        <button class="novel-filter-btn w-full text-left px-4 py-2 rounded bg-purple-200 font-bold transition" data-novel-id="all" onclick="filterEpisodes('all')">
+                            전체 보기
                         </button>
                     </li>
+                    
+                    <!-- 2. 자유 창작 노트 (존재할 때만 출력됨) -->
+                    {% for novel in novels %}
+                        {% if novel.title == "자유 창작 노트 (기본)" %}
+                        <li>
+                            <button class="novel-filter-btn w-full text-left px-4 py-2 rounded bg-gray-50 hover:bg-purple-100 transition" data-novel-id="{{ novel.id }}" onclick="filterEpisodes('{{ novel.id }}')">
+                                자유 창작 노트
+                            </button>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    <!-- 3. 생성한 세계관 -->
+                    {% for novel in novels %}
+                        {% if novel.title != "자유 창작 노트 (기본)" %}
+                        <li>
+                            <button class="novel-filter-btn w-full text-left px-4 py-2 rounded bg-gray-50 hover:bg-purple-100 transition" data-novel-id="{{ novel.id }}" onclick="filterEpisodes('{{ novel.id }}')">
+                                {{ novel.title }}
+                            </button>
+                        </li>
+                        {% endif %}
                     {% empty %}
-                    <li class="text-sm text-gray-500">생성된 세계관이 없습니다.</li>
+                        <!-- 세계관 데이터가 아예 하나도 없을 때를 대비한 안전장치 -->
+                        <li class="text-sm text-gray-500 mt-4 text-center">아직 저장된 프로젝트가 없습니다.</li>
                     {% endfor %}
                 </ul>
             </div>
@@ -40,15 +61,15 @@
                     <!-- 에피소드 영역 -->
                     <div class="bg-purple-50 p-4 rounded-lg">
                         <h4 class="font-semibold text-purple-800 mb-3">완성본 (에피소드)</h4>
-                        <ul class="space-y-2">
+                        <ul class="space-y-2 max-h-96 overflow-y-auto pr-2" id="episode-list-container">
                             {% for ep in episodes %}
-                            <a href="{% url 'episode_viewer' ep.id %}" class="block bg-white p-3 rounded shadow-sm flex justify-between items-center cursor-pointer hover:border-purple-300 border border-transparent transition">
+                            <!-- 💡 a 태그에 클래스(episode-item)와 소설 ID 이름표 부착 -->
+                            <a href="{% url 'episode_viewer' ep.id %}" class="episode-item block bg-white p-3 rounded shadow-sm flex justify-between items-center cursor-pointer hover:border-purple-300 border border-transparent transition" data-novel-id="{{ ep.novel.id }}">
                                 <span class="font-medium text-gray-800">{{ ep.title }}</span>
                                 <span class="text-xs text-gray-500">일치도: {{ ep.ai_similarity }}%</span>
                             </a>
-                            {% empty %}
-                            <li class="text-sm text-gray-500">완성된 에피소드가 없습니다.</li>
                             {% endfor %}
+                            <li id="empty-episode-msg" class="text-sm text-gray-500 hidden">해당 세계관의 에피소드가 없습니다.</li>
                         </ul>
                     </div>
                     
@@ -70,15 +91,18 @@
         </div>
     </div>
 
-    <!-- ⚙️ 환경 설정 탭 (초기 숨김) -->
+    <!-- 환경 설정 탭 (초기 숨김) -->
     <div id="content-settings" class="hidden max-w-2xl mx-auto space-y-8">
         
         <!-- AI 커스텀 영역 -->
         <section class="bg-gray-50 p-6 rounded-lg border border-gray-200">
             <h3 class="text-lg font-bold text-gray-800 mb-4">AI 설정</h3>
             <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">제미나이 창의성 (Temperature)</label>
-                <input type="range" min="0" max="1" step="0.1" value="0.7" class="w-full accent-purple-600">
+                <div class="flex justify-between items-center mb-2">
+                    <label class="block text-sm font-medium text-gray-700">제미나이 창의성 (Temperature)</label>
+                    <span id="temp-display" class="font-bold text-purple-600 bg-purple-100 px-3 py-1 rounded">{{ profile.ai_temperature|default:"0.7" }}</span>
+                </div>
+                <input type="range" id="temp-slider" min="0" max="1" step="0.1" value="{{ profile.ai_temperature|default:'0.7' }}" class="w-full accent-purple-600">
                 <div class="flex justify-between text-xs text-gray-500 mt-1">
                     <span>보수적 (안정적 문장)</span>
                     <span>창의적 (풍부한 표현)</span>
@@ -112,35 +136,13 @@
 
 <!-- 탭 제어용 간단한 자바스크립트 -->
 <script>
-    // 향후 스크립트 모듈화 원칙에 따라 별도 .js 파일로 분리할 수 있습니다.
-    function switchTab(tabName) {
-        const archiveTab = document.getElementById('tab-archive');
-        const settingsTab = document.getElementById('tab-settings');
-        const archiveContent = document.getElementById('content-archive');
-        const settingsContent = document.getElementById('content-settings');
-
-        if (tabName === 'archive') {
-            // UI 스타일 변경
-            archiveTab.className = "py-2 px-6 text-lg font-semibold text-purple-600 border-b-2 border-purple-600 focus:outline-none";
-            settingsTab.className = "py-2 px-6 text-lg font-semibold text-gray-500 hover:text-purple-600 focus:outline-none";
-            // 콘텐츠 토글
-            archiveContent.classList.remove('hidden');
-            settingsContent.classList.add('hidden');
-        } else {
-            // UI 스타일 변경
-            settingsTab.className = "py-2 px-6 text-lg font-semibold text-purple-600 border-b-2 border-purple-600 focus:outline-none";
-            archiveTab.className = "py-2 px-6 text-lg font-semibold text-gray-500 hover:text-purple-600 focus:outline-none";
-            // 콘텐츠 토글
-            settingsContent.classList.remove('hidden');
-            archiveContent.classList.add('hidden');
-        }
-    }
-
-    function confirmDeleteAccount() {
-        // 브라우저 기본 알림창으로 1차 방어 (후에 커스텀 모달로 고도화 가능)
-        if (confirm("정말로 탈퇴하시겠습니까? (이 작업은 되돌릴 수 없습니다.)")) {
-            alert("회원 탈퇴 로직이 실행됩니다."); // 차후 백엔드 API 연동
-        }
-    }
+    // 외부 JS 파일에서 Django URL을 사용할 수 있도록 전역 설정 객체(Data Bridge) 생성
+    window.SettingsConfig = {
+        updateApiUrl: "{% url 'update_settings_api' %}",
+        deleteApiUrl: "{% url 'delete_account_api' %}",
+        homeUrl: "{% url 'home' %}"
+    };
 </script>
+<!-- 분리된 정적 스크립트 로드 -->
+<script src="{% static 'js/common/settings.js' %}"></script>
 {% endblock %}

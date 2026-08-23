@@ -9,6 +9,9 @@ class AuthorProfile(models.Model):
     originality_point = models.PositiveIntegerField(default=0, verbose_name="오리지널리티 누적 포인트")
     badges = models.JSONField(default=dict, blank=True, verbose_name="획득 뱃지 목록")
 
+    ai_temperature = models.FloatField(default=0.7, verbose_name="AI 창의성")
+    is_dark_mode = models.BooleanField(default=False, verbose_name="다크모드 활성화 여부")
+
     def __str__(self):
         return f"{self.user.username} 작가 프로필"
 

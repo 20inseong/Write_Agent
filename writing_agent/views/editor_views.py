@@ -9,7 +9,7 @@ from google import genai
 from google.genai import types
 import re
 
-from ..models import Novel, StoryElement, CharacterDetail, FactionDetail, ItemDetail, LocationDetail, EventDetail, TemporaryDraft, BlockHistorySnapshot, Episode
+from ..models import Novel, StoryElement, CharacterDetail, FactionDetail, ItemDetail, LocationDetail, EventDetail, TemporaryDraft, BlockHistorySnapshot, Episode, AuthorProfile
 from ..prompt import prompt_labels, system_prompt
 from ..utils import generate_saju_prompt
 
@@ -282,6 +282,12 @@ def editor(request: HttpRequest, novel_id: int = None) -> HttpResponse:
         final_draft = ""
         previous_scene_summary = ""
 
+        # 현재 로그인한 작가의 프로필에서 설정된 창의성 지수를 가져오기.
+        author_profile, _ = AuthorProfile.objects.get_or_create(user=request.user)
+        user_temperature = author_profile.ai_temperature
+
+        print(f"\n[시스템 로그] AI 창의성(Temperature) 적용 수치: {user_temperature}\n")
+
         for i, block in enumerate(sorted_blocks, 1):
             instructions_list = []
             
@@ -308,7 +314,7 @@ def editor(request: HttpRequest, novel_id: int = None) -> HttpResponse:
                     contents=user_prompt,
                     config=types.GenerateContentConfig(
                         system_instruction=enhanced_system_prompt,
-                        temperature=0.7,
+                        temperature=user_temperature,
                     )
                 )
                 

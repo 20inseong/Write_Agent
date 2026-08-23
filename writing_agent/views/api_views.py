@@ -9,7 +9,7 @@ from google import genai
 from google.genai import types
 from django.utils import timezone
 
-from ..models import Novel, StoryElement, CharacterDetail, FactionDetail, ItemDetail, LocationDetail, EventDetail, TemporaryDraft, Episode
+from ..models import Novel, StoryElement, CharacterDetail, FactionDetail, ItemDetail, LocationDetail, EventDetail, TemporaryDraft, Episode, AuthorProfile
 from ..prompt import oov_extract_prompt, prompt_labels, system_prompt
 from ..utils import generate_saju_prompt
 
@@ -292,3 +292,32 @@ def save_episode_api(request: HttpRequest, novel_id: int = None) -> JsonResponse
         # 에러가 나도 서버가 죽지 않고 구체적인 이유를 프론트로 전달해 줌
         print(f"🚨 완성본 저장 API 에러: {e}")
         return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+@login_required
+@require_POST
+def update_settings_api(request):
+    try:
+        data = json.loads(request.body)
+        profile, _ = AuthorProfile.objects.get_or_create(user=request.user)
+        
+        # 프론트에서 보낸 데이터 확인 및 업데이트
+        if 'ai_temperature' in data:
+            profile.ai_temperature = float(data['ai_temperature'])
+        if 'is_dark_mode' in data:
+            profile.is_dark_mode = bool(data['is_dark_mode'])
+            
+        profile.save()
+        return JsonResponse({"status": "success", "message": "설정이 저장되었습니다."})
+    except Exception as e:
+        return JsonResponse({"status": "error", "message": str(e)}, status=400)
+
+@login_required
+@require_POST
+def delete_account_api(request):
+    try:
+        user = request.user
+        user.is_active = False # 계정을 잠가서 로그인 불가능하게 만듦
+        user.save()
+        return JsonResponse({"status": "success", "message": "계정이 비활성화되었습니다."})
+    except Exception as e:
+        return JsonResponse({"status": "error", "message": str(e)}, status=400)

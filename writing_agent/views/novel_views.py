@@ -5,7 +5,7 @@ from ..models import Novel, Episode, TemporaryDraft, AuthorProfile
 
 @login_required
 def world_list_view(request):
-    my_novels = Novel.objects.filter(author=request.user)
+    my_novels = Novel.objects.filter(author=request.user).exclude(title="자유 창작 노트 (기본)")
     return render(request, "world_list.html", {"novels": my_novels})
 
 @login_required
