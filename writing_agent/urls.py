@@ -37,4 +37,11 @@ urlpatterns = [
     path('api/save_draft/', views.save_temp_draft, name='save_temp_draft'),
     path('api/save-episode/', api_views.save_episode_api, name='save_episode_api_free'),
     path('api/save-episode/<int:novel_id>/', api_views.save_episode_api, name='save_episode_api'),
+
+    # [설정 및 아카이브 뷰 추가] 통합 설정 페이지 및 보관함
+    path('settings/', views.settings_archive_view, name='settings_archive'),
+    path('viewer/episode/<uuid:episode_id>/', views.episode_viewer_view, name='episode_viewer'),
+
+    # --- 퇴고 전용 1분할 에디터 ---
+    path("editor/revision/<uuid:episode_id>/", views.revision_editor_view, name="revision_editor"),
 ]

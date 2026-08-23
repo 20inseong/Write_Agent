@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto mt-10 p-8 bg-white rounded-lg shadow-md">
+    
+    <!-- 상단 헤더 및 뒤로가기 -->
+    <div class="flex justify-between items-center border-b border-gray-200 pb-4 mb-8">
+        <a href="{% url 'settings_archive' %}" class="text-gray-500 hover:text-purple-600 transition font-medium">
+            ← 보관함으로 돌아가기
+        </a>
+        <div class="text-right">
+            <h1 class="text-3xl font-bold text-gray-900">{{ episode.title }}</h1>
+            <p class="text-sm text-gray-500 mt-2">{{ episode.novel.title }} | AI 일치도: {{ episode.ai_similarity }}%</p>
+        </div>
+    </div>
+    
+    <!-- 본문 영역 (줄바꿈 보존을 위해 whitespace-pre-wrap 활용) -->
+    <div class="prose max-w-none text-gray-800 leading-loose whitespace-pre-wrap text-lg font-serif">{{ episode.content }}</div>
+    
+    <!-- 하단 액션 바 (에디터 양방향 연결) -->
+    <div class="mt-16 pt-6 border-t border-gray-200 flex justify-end"> 
+        <a href="{% url 'revision_editor' episode.id %}" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-lg shadow transition flex items-center gap-2">
+            ✏️ 다시 수정하기
+        </a>
+    </div>
+
+</div>
+{% endblock %}

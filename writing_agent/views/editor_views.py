@@ -9,7 +9,7 @@ from google import genai
 from google.genai import types
 import re
 
-from ..models import Novel, StoryElement, CharacterDetail, FactionDetail, ItemDetail, LocationDetail, EventDetail, TemporaryDraft, BlockHistorySnapshot
+from ..models import Novel, StoryElement, CharacterDetail, FactionDetail, ItemDetail, LocationDetail, EventDetail, TemporaryDraft, BlockHistorySnapshot, Episode
 from ..prompt import prompt_labels, system_prompt
 from ..utils import generate_saju_prompt
 
@@ -341,5 +341,32 @@ def editor(request: HttpRequest, novel_id: int = None) -> HttpResponse:
         {
             "ai_content": ai_draft_text,
             "user_content": user_draft_text
+        } 
+    )
+
+# 퇴고 전용 1분할 에디터
+@login_required
+def revision_editor_view(request: HttpRequest, episode_id: str) -> HttpResponse:
+    episode = get_object_or_404(Episode, id=episode_id, author=request.user, is_deleted=False)
+
+    if request.method == "POST":
+        updated_title = request.POST.get("updated_title")
+        updated_content = request.POST.get("updated_content")
+        
+        if updated_title and updated_content:
+            episode.title = updated_title.strip()
+            episode.content = updated_content.strip()
+            episode.save()
+
+            return redirect('episode_viewer', episode_id=episode.id)
+    
+    return render(
+        request, 
+        "editor_revision.html", 
+        {
+            "episode": episode,
+            "user_content": episode.content,
+            "ai_content": "", 
+            "is_revision_mode": True # 템플릿에서 UI 렌더링 분기용 플래그
         } 
     )
