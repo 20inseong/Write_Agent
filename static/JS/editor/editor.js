@@ -1,7 +1,13 @@
 (function () {
-    // Django 템플릿에서 넘겨준 설정값 파싱
-    const configData = document.getElementById('editor-config');
-    const config = configData ? JSON.parse(configData.textContent) : { dashboardUrl: "/" };
+  let config = { dashboardUrl: "/" };
+  try {
+      const configData = document.getElementById('editor-config');
+      if (configData && configData.textContent.trim()) {
+          config = JSON.parse(configData.textContent);
+      }
+  } catch (e) {
+      console.error("에디터 설정 JSON 파싱 에러:", e);
+  }
 
     var editor = document.getElementById("main-editor");
     var counter = document.getElementById("char-count");
@@ -9,7 +15,7 @@
     const similarityDisplay = document.getElementById("similarity-display");
     const similarityGauge = document.getElementById("similarity-gauge");
     const emptyNotice = document.getElementById("empty-ai-notice");
-    const maxChars = 5000;
+    const maxChars = config.goalWordCount || 5000;
 
     // N-gram (2어절) 생성기
     function getBigrams(text) {
@@ -42,6 +48,12 @@
       if(!editor) return;
       const userText = editor.value;
       counter.textContent = `현재 ${userText.length}자 / ${maxChars}자`;
+
+      if (userText.length >= maxChars) {
+        counter.className = "text-sm tabular-nums font-bold text-indigo-600";
+      } else {
+        counter.className = "text-sm tabular-nums text-slate-600";
+      }
 
       if (aiBigrams.size === 0 || userText.trim().length === 0) {
         similarityDisplay.className = "text-xs font-bold text-green-600";

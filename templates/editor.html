@@ -51,7 +51,7 @@
         >{{ user_content }}</textarea>
       </div>
       <footer class="flex shrink-0 flex-wrap items-center gap-3 border-t border-slate-200 px-4 py-3">
-        <span id="char-count" class="text-sm tabular-nums text-slate-600">현재 글자수 / 5000자</span>
+        <span id="char-count" class="text-sm tabular-nums text-slate-600">현재 글자수 / {{ goal_word_count }}자</span>
         <div class="ml-auto flex flex-wrap gap-2 items-center">
           <span id="save-status" class="text-sm font-medium text-slate-500 mr-2 transition-colors"></span>
           <!-- 수동 저장 버튼 -->
@@ -156,7 +156,8 @@
 {% block extra_scripts %}
 <script id="editor-config" type="application/json">
   {
-    "dashboardUrl": "{% url 'dashboard' %}"
+    "dashboardUrl": "{% url 'dashboard' %}",
+    "goalWordCount": {{ goal_word_count|default:5000 }}
   }
 </script>
 

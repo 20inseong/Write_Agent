@@ -199,3 +199,18 @@ function openBlockModal(element) {
 function closeBlockModal() {
     document.getElementById('block-detail-modal').classList.add('hidden');
 }
+
+// 개인정보 저장
+function savePersonalInfo() {
+    const penName = document.getElementById('setting-pen-name').value;
+    const email = document.getElementById('setting-email').value;
+    saveSettings({ pen_name: penName, email: email });
+    alert("개인정보가 성공적으로 업데이트되었습니다.");
+}
+
+// 목표 글자 수 저장
+function saveGoalWordCount() {
+    const goalWords = document.getElementById('setting-goal-words').value;
+    saveSettings({ goal_word_count: goalWords });
+    alert("기본 목표 글자 수가 변경되었습니다.");
+}

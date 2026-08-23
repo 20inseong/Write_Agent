@@ -6,11 +6,12 @@ from django.conf import settings
 # 유저 스탯 테이블: 작가의 오리지널리티 점수와 뱃지를 독립적으로 관리
 class AuthorProfile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='profile')
+    pen_name = models.CharField(max_length=50, blank=True, null=True, verbose_name="필명")
     originality_point = models.PositiveIntegerField(default=0, verbose_name="오리지널리티 누적 포인트")
     badges = models.JSONField(default=dict, blank=True, verbose_name="획득 뱃지 목록")
 
     ai_temperature = models.FloatField(default=0.7, verbose_name="AI 창의성")
-    is_dark_mode = models.BooleanField(default=False, verbose_name="다크모드 활성화 여부")
+    goal_word_count = models.PositiveIntegerField(default=5000, verbose_name="목표 글자 수")
 
     def __str__(self):
         return f"{self.user.username} 작가 프로필"

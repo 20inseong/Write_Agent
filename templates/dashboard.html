@@ -6,7 +6,13 @@
 <main class="flex min-h-[calc(100vh-3.5rem)] flex-col items-center justify-center px-4 py-12 bg-slate-50">
   
   <div class="mb-10 text-center">
-    <h1 class="text-3xl font-bold tracking-tight text-slate-800">나만의 창작 작업실</h1>
+    <h1 class="text-3xl font-bold tracking-tight text-slate-800">
+      {% if request.user.profile.pen_name %}
+        {{ request.user.profile.pen_name }} 작가의 창작 작업실
+      {% else %}
+        {{ request.user.username }} 작가의 창작 작업실
+      {% endif %}
+    </h1>
     <p class="mt-2 text-sm text-slate-500">오늘은 어떤 이야기를 써볼까요?</p>
   </div>
 

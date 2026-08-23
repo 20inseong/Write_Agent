@@ -66,6 +66,7 @@ def editor(request: HttpRequest, novel_id: int = None) -> HttpResponse:
 
     ai_draft_text = ""
     user_draft_text = ""
+    author_profile, _ = AuthorProfile.objects.get_or_create(user=request.user)
 
     # 이어쓰기 복원 로직
     mode = request.GET.get('mode')
@@ -351,7 +352,8 @@ def editor(request: HttpRequest, novel_id: int = None) -> HttpResponse:
         "editor.html", 
         {
             "ai_content": ai_draft_text,
-            "user_content": user_draft_text
+            "user_content": user_draft_text,
+            "goal_word_count": author_profile.goal_word_count
         } 
     )
 

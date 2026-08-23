@@ -307,13 +307,19 @@ def update_settings_api(request):
     try:
         data = json.loads(request.body)
         profile, _ = AuthorProfile.objects.get_or_create(user=request.user)
+        user = request.user
         
         # 프론트에서 보낸 데이터 확인 및 업데이트
         if 'ai_temperature' in data:
             profile.ai_temperature = float(data['ai_temperature'])
-        if 'is_dark_mode' in data:
-            profile.is_dark_mode = bool(data['is_dark_mode'])
+        if 'goal_word_count' in data:
+            profile.goal_word_count = int(data['goal_word_count'])
+        if 'pen_name' in data:
+            profile.pen_name = data['pen_name'].strip()
+        if 'email' in data:
+            user.email = data['email'].strip()
             
+        user.save()
         profile.save()
         return JsonResponse({"status": "success", "message": "설정이 저장되었습니다."})
     except Exception as e:
