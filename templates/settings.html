@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
+    <!-- 탭 내비게이션 -->
+    <div class="flex border-b border-gray-200 mb-6">
+        <button id="tab-archive" class="py-2 px-6 text-lg font-semibold text-purple-600 border-b-2 border-purple-600 focus:outline-none" onclick="switchTab('archive')">
+            📚 작품 보관함
+        </button>
+        <button id="tab-settings" class="py-2 px-6 text-lg font-semibold text-gray-500 hover:text-purple-600 focus:outline-none" onclick="switchTab('settings')">
+            ⚙️ 환경 설정
+        </button>
+    </div>
+
+    <!-- 작품 보관함 탭 (기본 활성화) -->
+    <div id="content-archive" class="block">
+        <div class="flex gap-6">
+            <!-- 좌측 패널: 소설 프로젝트 목록 -->
+            <div class="w-1/4 border-r border-gray-200 pr-4">
+                <h3 class="text-lg font-bold mb-4 text-gray-700">작성한 에피소드 & 블록</h3>
+                <ul class="space-y-2">
+                    <!-- 1. 전체 보기 -->
+                    <li>
+                        <button class="novel-filter-btn w-full text-left px-4 py-2 rounded bg-purple-200 font-bold transition" data-novel-id="all" onclick="filterEpisodes('all')">
+                            전체 보기
+                        </button>
+                    </li>
+                    
+                    <!-- 2. 자유 창작 노트 (존재할 때만 출력됨) -->
+                    {% for novel in novels %}
+                        {% if novel.title == "자유 창작 노트 (기본)" %}
+                        <li>
+                            <button class="novel-filter-btn w-full text-left px-4 py-2 rounded bg-gray-50 hover:bg-purple-100 transition" data-novel-id="{{ novel.id }}" onclick="filterEpisodes('{{ novel.id }}')">
+                                자유 창작 노트
+                            </button>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    <!-- 3. 생성한 세계관 -->
+                    {% for novel in novels %}
+                        {% if novel.title != "자유 창작 노트 (기본)" %}
+                        <li>
+                            <button class="novel-filter-btn w-full text-left px-4 py-2 rounded bg-gray-50 hover:bg-purple-100 transition" data-novel-id="{{ novel.id }}" onclick="filterEpisodes('{{ novel.id }}')">
+                                {{ novel.title }}
+                            </button>
+                        </li>
+                        {% endif %}
+                    {% empty %}
+                        <!-- 세계관 데이터가 아예 하나도 없을 때를 대비한 안전장치 -->
+                        <li class="text-sm text-gray-500 mt-4 text-center">아직 저장된 프로젝트가 없습니다.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <!-- 우측 패널: 에피소드 및 블록 저장 목록 -->
+            <div class="w-3/4">
+                <h3 class="text-lg font-bold mb-4 text-gray-700">저장된 기록</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <!-- 에피소드 영역 -->
+                    <div class="bg-purple-50 p-4 rounded-lg">
+                        <h4 class="font-semibold text-purple-800 mb-3">완성본 (에피소드)</h4>
+                        <ul class="space-y-2 max-h-96 overflow-y-auto pr-2" id="episode-list-container">
+                            {% for ep in episodes %}
+                            <!-- a 태그에 클래스(episode-item)와 소설 ID 이름표 부착 -->
+                            <a href="{% url 'episode_viewer' ep.id %}" class="episode-item block bg-white p-3 rounded shadow-sm flex justify-between items-center cursor-pointer hover:border-purple-300 border border-transparent transition" data-novel-id="{{ ep.novel.id }}">
+                                <span class="font-medium text-gray-800">{{ ep.title }}</span>
+                                <span class="text-xs text-gray-500">일치도: {{ ep.ai_similarity }}%</span>
+                            </a>
+                            {% endfor %}
+                            <li id="empty-episode-msg" class="text-sm text-gray-500 hidden">해당 세계관의 에피소드가 없습니다.</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- 블록 저장 영역 -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h4 class="font-semibold text-gray-800 mb-3">블록 저장 목록</h4>
+                        <ul class="space-y-2">
+                            {% for block in blocks %}
+                            <li class="draft-item bg-white p-3 rounded shadow-sm text-sm text-gray-600 border border-gray-200 cursor-pointer hover:border-purple-400 transition flex justify-between items-center" 
+                                data-novel-id="{{ block.novel.id|default:'none' }}"
+                                data-context="{{ block.setup_context}}"
+                                onclick="openBlockModal(this)">
+                                <span>{{ block.created_at|date:"m/d H:i" }} 작성된 블록</span>
+                                <span class="text-xs font-bold text-purple-600 bg-purple-100 px-2 py-1 rounded">내용 보기</span>
+                            </li>
+                            {% empty %}
+                            <li class="text-sm text-gray-500">저장된 블록이 없습니다.</li>
+                            {% endfor %}
+                            
+                            <!-- 💡 자바스크립트 필터링 후 결과가 없을 때 보여줄 메시지 -->
+                            <!-- <li id="empty-draft-msg" class="text-sm text-gray-500 hidden">해당 세계관에서 저장된 블록이 없습니다.</li> -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 환경 설정 탭 (초기 숨김) -->
+    <div id="content-settings" class="hidden max-w-2xl mx-auto space-y-8">
+        
+        <!-- AI 커스텀 영역 -->
+        <section class="bg-gray-50 p-6 rounded-lg border border-gray-200">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">AI 설정</h3>
+            <div class="mb-4">
+                <div class="flex justify-between items-center mb-2">
+                    <label class="block text-sm font-medium text-gray-700">제미나이 창의성 (Temperature)</label>
+                    <span id="temp-display" class="font-bold text-purple-600 bg-purple-100 px-3 py-1 rounded">{{ profile.ai_temperature|default:"0.7" }}</span>
+                </div>
+                <input type="range" id="temp-slider" min="0" max="1" step="0.1" value="{{ profile.ai_temperature|default:'0.7' }}" class="w-full accent-purple-600">
+                <div class="flex justify-between text-xs text-gray-500 mt-1">
+                    <span>보수적 (안정적 문장)</span>
+                    <span>창의적 (풍부한 표현)</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- UI 커스텀 영역
+        <section class="bg-gray-50 p-6 rounded-lg border border-gray-200">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">시스템 설정</h3>
+            <div class="flex items-center justify-between">
+                <span class="text-sm font-medium text-gray-700">다크 모드</span>
+                <button class="bg-gray-300 w-12 h-6 rounded-full relative focus:outline-none">
+                    <span class="absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform"></span>
+                </button>
+            </div>
+        </section> -->
+
+        <!-- 계정 관리 (Danger Zone) -->
+        <section class="border border-red-200 p-6 rounded-lg mt-8">
+            <h3 class="text-lg font-bold text-red-600 mb-4">위험 구역 (Danger Zone)</h3>
+            <p class="text-sm text-gray-600 mb-4">계정을 탈퇴하면 모든 데이터가 논리적으로 삭제 처리되며 복구할 수 없습니다.</p>
+            <button class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded transition" onclick="confirmDeleteAccount()">
+                회원 탈퇴
+            </button>
+        </section>
+
+    </div>
+</div>
+
+<!-- 블록 내용 확인용 모달(팝업) 뼈대 -->
+<div id="block-detail-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-50 p-4">
+    <div class="bg-white w-full max-w-2xl rounded-xl shadow-2xl flex flex-col max-h-[80vh] overflow-hidden">
+        <div class="p-5 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+            <h3 class="font-bold text-gray-800 text-lg">📝 당시 작성한 블록 지시사항</h3>
+            <button onclick="closeBlockModal()" class="text-gray-400 hover:text-gray-700 transition">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        <!-- 자바스크립트가 JSON 데이터를 풀어서 여기에 넣어줍니다 -->
+        <div id="block-modal-content" class="p-6 overflow-y-auto flex-1 space-y-4 bg-slate-50">
+        </div>
+        <div class="p-4 border-t border-gray-200 text-right bg-white">
+            <button onclick="closeBlockModal()" class="px-5 py-2.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-bold transition">닫기</button>
+        </div>
+    </div>
+</div>
+
+<!-- 탭 제어용 간단한 자바스크립트 -->
+<script>
+    // 외부 JS 파일에서 Django URL을 사용할 수 있도록 전역 설정 객체(Data Bridge) 생성
+    window.SettingsConfig = {
+        updateApiUrl: "{% url 'update_settings_api' %}",
+        deleteApiUrl: "{% url 'delete_account_api' %}",
+        homeUrl: "{% url 'home' %}"
+    };
+</script>
+<!-- 분리된 정적 스크립트 로드 -->
+<script src="{% static 'js/common/settings.js' %}"></script>
+{% endblock %}

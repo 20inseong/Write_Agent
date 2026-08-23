@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-4xl mx-auto h-full flex flex-col bg-white shadow-xl rounded-2xl overflow-hidden border border-slate-200">
+        
+        <form id="revision-form" method="POST" class="h-full flex flex-col">
+            {% csrf_token %}
+            <!-- 상단 툴바 및 정보 영역 -->
+            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50">
+                <div class="flex items-center gap-4">
+                    <a href="{% url 'episode_viewer' episode.id %}" class="text-slate-500 hover:text-indigo-600 transition flex items-center gap-2 text-sm font-medium">
+                        <span>← 뷰어로 돌아가기</span>
+                    </a>
+                    <div class="h-6 w-px bg-slate-300"></div>
+                    
+                    <!-- 💡 더블클릭 기믹이 적용된 제목 영역 -->
+                    <div id="title-container" class="cursor-pointer group" title="더블클릭하여 제목 수정" ondblclick="enableTitleEdit()">
+                        <!-- 평상시 보이는 제목 -->
+                        <h1 id="display-title" class="text-xl font-bold text-slate-800 group-hover:text-indigo-600 transition">
+                            {{ episode.title }} <span class="text-xs text-gray-400 opacity-0 group-hover:opacity-100 transition">(더블클릭하여 수정)</span>
+                        </h1>
+                        <!-- 더블클릭 시 나타나는 입력창 (기본 숨김) -->
+                        <input type="text" id="edit-title" name="updated_title" value="{{ episode.title }}" 
+                               class="hidden text-xl font-bold text-slate-800 bg-white border-b-2 border-indigo-400 focus:outline-none focus:border-indigo-600 px-1 py-0.5 w-64">
+                        <p class="text-xs text-slate-500 mt-1">소설: {{ episode.novel.title }} | 퇴고 모드 (1분할)</p>
+                    </div>
+                </div>
+                
+                <div class="flex gap-2">
+                    <button type="button" onclick="window.open('https://search.naver.com/search.naver?query=맞춤법검사기', '_blank')" class="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition shadow-sm">
+                        ✨ 맞춤법 검사
+                    </button>
+                    <!-- 저장 버튼 -->
+                    <button type="button" id="btn-save-revision" class="px-5 py-2 text-sm font-bold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition shadow-md">
+                        💾 수정 완료
+                    </button>
+                </div>
+            </div>
+
+            <!-- 메인 본문 영역 -->
+            <div class="flex-grow p-6 flex flex-col h-[75vh]">
+                <textarea 
+                    id="revision-content" 
+                    name="updated_content" 
+                    spellcheck="true"
+                    class="flex-grow w-full h-full p-4 text-lg font-serif leading-loose text-slate-800 bg-transparent border-0 focus:ring-0 resize-none outline-none placeholder-slate-300"
+                >{{ user_content }}</textarea>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // 제목 더블클릭 이벤트 처리 함수
+    function enableTitleEdit() {
+        const displayTitle = document.getElementById('display-title');
+        const editInput = document.getElementById('edit-title');
+        
+        displayTitle.classList.add('hidden');
+        editInput.classList.remove('hidden');
+        editInput.focus();
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const saveBtn = document.getElementById('btn-save-revision');
+        const form = document.getElementById('revision-form');
+        
+        saveBtn.addEventListener('click', function() {
+            if(confirm("수정된 제목과 내용을 저장하시겠습니까?")) {
+                form.submit(); 
+            }
+        });
+    });
+</script>
+{% endblock %}

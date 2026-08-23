@@ -1,11 +1,11 @@
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from ..models import Novel
+from ..models import Novel, Episode, TemporaryDraft, AuthorProfile, BlockHistorySnapshot
 
 @login_required
 def world_list_view(request):
-    my_novels = Novel.objects.filter(author=request.user)
+    my_novels = Novel.objects.filter(author=request.user).exclude(title="자유 창작 노트 (기본)")
     return render(request, "world_list.html", {"novels": my_novels})
 
 @login_required
@@ -44,3 +44,29 @@ def delete_novel(request, novel_id):
         # 소설은 완전 삭제(Hard Delete) 적용
         novel.delete()
     return redirect('world_list')
+
+@login_required
+def settings_archive_view(request):
+    # 작가(로그인 유저)에 종속된 데이터만 격리 조회 및 소프트 딜리트 필터링 적용
+    my_novels = Novel.objects.filter(author=request.user).exclude(title='자유 창작 노트 (기본)')
+    my_episodes = Episode.objects.filter(author=request.user, is_deleted=False).order_by('-updated_at')
+    my_blocks = BlockHistorySnapshot.objects.filter(author=request.user, is_deleted=False).order_by('-created_at')
+    
+    # 뱃지 및 스탯 관리를 위한 프로필 조회 (없으면 자동 생성)
+    author_profile, _ = AuthorProfile.objects.get_or_create(user=request.user)
+
+    return render(request, "settings.html", {
+        "novels": my_novels,
+        "episodes": my_episodes,
+        "blocks": my_blocks,
+        "profile": author_profile,
+    })
+
+@login_required
+def episode_viewer_view(request, episode_id):
+    # 보안: 로그인한 작가 본인의 글인지 확인 + 논리적 삭제(소프트 딜리트)되지 않은 글인지 확인
+    episode = get_object_or_404(Episode, id=episode_id, author=request.user, is_deleted=False)
+    
+    return render(request, "viewer.html", {
+        "episode": episode
+    })

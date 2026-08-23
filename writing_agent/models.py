@@ -9,6 +9,9 @@ class AuthorProfile(models.Model):
     originality_point = models.PositiveIntegerField(default=0, verbose_name="오리지널리티 누적 포인트")
     badges = models.JSONField(default=dict, blank=True, verbose_name="획득 뱃지 목록")
 
+    ai_temperature = models.FloatField(default=0.7, verbose_name="AI 창의성")
+    is_dark_mode = models.BooleanField(default=False, verbose_name="다크모드 활성화 여부")
+
     def __str__(self):
         return f"{self.user.username} 작가 프로필"
 
@@ -157,7 +160,7 @@ class TemporaryDraft(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     
-    # UI 시야에서는 감추고 DB에만 보관할 초기 블록 설정 컨텍스트
+    novel = models.ForeignKey(Novel, on_delete=models.CASCADE, null=True, blank=True, related_name='drafts')
     setup_context = models.TextField(blank=True, null=True)
 
     ai_draft_content = models.TextField(blank=True, null=True)
@@ -175,7 +178,7 @@ class BlockHistorySnapshot(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     
-    # 특정 시점의 블록 설정 데이터 (JSON 형식 문자열로 저장)
+    novel = models.ForeignKey(Novel, on_delete=models.CASCADE, null=True, blank=True, related_name='block_snapshots')
     setup_context = models.TextField(blank=True, null=True)
     
     # 스냅샷 생성 시간 (타임라인 정렬용)

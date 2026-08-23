@@ -9,7 +9,7 @@ from google import genai
 from google.genai import types
 import re
 
-from ..models import Novel, StoryElement, CharacterDetail, FactionDetail, ItemDetail, LocationDetail, EventDetail, TemporaryDraft, BlockHistorySnapshot
+from ..models import Novel, StoryElement, CharacterDetail, FactionDetail, ItemDetail, LocationDetail, EventDetail, TemporaryDraft, BlockHistorySnapshot, Episode, AuthorProfile
 from ..prompt import prompt_labels, system_prompt
 from ..utils import generate_saju_prompt
 
@@ -59,14 +59,18 @@ def add_block(request: HttpRequest) -> HttpResponse:
 
 @login_required
 def editor(request: HttpRequest, novel_id: int = None) -> HttpResponse:
-    novel = get_object_or_404(Novel, id=novel_id, author=request.user) if novel_id else None
+    if novel_id:
+        novel = get_object_or_404(Novel, id=novel_id, author=request.user)
+    else:
+        novel, _ = Novel.objects.get_or_create(author=request.user, title="자유 창작 노트 (기본)")
+
     ai_draft_text = ""
     user_draft_text = ""
 
-    # [이어쓰기 복원 로직] 대시보드에서 '?mode=continue'로 진입했을 때
+    # 이어쓰기 복원 로직
     mode = request.GET.get('mode')
     if mode == 'continue':
-        draft = TemporaryDraft.objects.filter(author=request.user, is_deleted=False).first()
+        draft = TemporaryDraft.objects.filter(author=request.user, novel=novel, is_deleted=False).first()
         if draft:
             ai_draft_text = draft.ai_draft_content or ""
             user_draft_text = draft.user_content or ""
@@ -198,6 +202,7 @@ def editor(request: HttpRequest, novel_id: int = None) -> HttpResponse:
             # 단일 덮어쓰기 대신 과거 기록을 계속 누적하는 방식으로 변경
             BlockHistorySnapshot.objects.create(
                 author=request.user,
+                novel=novel,
                 setup_context=json.dumps(sorted_blocks, ensure_ascii=False)
             )
         except Exception as e:
@@ -282,6 +287,12 @@ def editor(request: HttpRequest, novel_id: int = None) -> HttpResponse:
         final_draft = ""
         previous_scene_summary = ""
 
+        # 현재 로그인한 작가의 프로필에서 설정된 창의성 지수를 가져오기.
+        author_profile, _ = AuthorProfile.objects.get_or_create(user=request.user)
+        user_temperature = author_profile.ai_temperature
+
+        print(f"\n[시스템 로그] AI 창의성(Temperature) 적용 수치: {user_temperature}\n")
+
         for i, block in enumerate(sorted_blocks, 1):
             instructions_list = []
             
@@ -308,7 +319,7 @@ def editor(request: HttpRequest, novel_id: int = None) -> HttpResponse:
                     contents=user_prompt,
                     config=types.GenerateContentConfig(
                         system_instruction=enhanced_system_prompt,
-                        temperature=0.7,
+                        temperature=user_temperature,
                     )
                 )
                 
@@ -341,5 +352,32 @@ def editor(request: HttpRequest, novel_id: int = None) -> HttpResponse:
         {
             "ai_content": ai_draft_text,
             "user_content": user_draft_text
+        } 
+    )
+
+# 퇴고 전용 1분할 에디터
+@login_required
+def revision_editor_view(request: HttpRequest, episode_id: str) -> HttpResponse:
+    episode = get_object_or_404(Episode, id=episode_id, author=request.user, is_deleted=False)
+
+    if request.method == "POST":
+        updated_title = request.POST.get("updated_title")
+        updated_content = request.POST.get("updated_content")
+        
+        if updated_title and updated_content:
+            episode.title = updated_title.strip()
+            episode.content = updated_content.strip()
+            episode.save()
+
+            return redirect('episode_viewer', episode_id=episode.id)
+    
+    return render(
+        request, 
+        "editor_revision.html", 
+        {
+            "episode": episode,
+            "user_content": episode.content,
+            "ai_content": "", 
+            "is_revision_mode": True # 템플릿에서 UI 렌더링 분기용 플래그
         } 
     )
