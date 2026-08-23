@@ -54,7 +54,7 @@
                 </ul>
             </div>
 
-            <!-- 우측 패널: 에피소드 및 임시저장 목록 -->
+            <!-- 우측 패널: 에피소드 및 블록 저장 목록 -->
             <div class="w-3/4">
                 <h3 class="text-lg font-bold mb-4 text-gray-700">저장된 기록</h3>
                 <div class="grid grid-cols-2 gap-4">
@@ -63,7 +63,7 @@
                         <h4 class="font-semibold text-purple-800 mb-3">완성본 (에피소드)</h4>
                         <ul class="space-y-2 max-h-96 overflow-y-auto pr-2" id="episode-list-container">
                             {% for ep in episodes %}
-                            <!-- 💡 a 태그에 클래스(episode-item)와 소설 ID 이름표 부착 -->
+                            <!-- a 태그에 클래스(episode-item)와 소설 ID 이름표 부착 -->
                             <a href="{% url 'episode_viewer' ep.id %}" class="episode-item block bg-white p-3 rounded shadow-sm flex justify-between items-center cursor-pointer hover:border-purple-300 border border-transparent transition" data-novel-id="{{ ep.novel.id }}">
                                 <span class="font-medium text-gray-800">{{ ep.title }}</span>
                                 <span class="text-xs text-gray-500">일치도: {{ ep.ai_similarity }}%</span>
@@ -73,17 +73,24 @@
                         </ul>
                     </div>
                     
-                    <!-- 임시저장 영역 -->
+                    <!-- 블록 저장 영역 -->
                     <div class="bg-gray-50 p-4 rounded-lg">
-                        <h4 class="font-semibold text-gray-800 mb-3">임시저장 블록</h4>
+                        <h4 class="font-semibold text-gray-800 mb-3">블록 저장 목록</h4>
                         <ul class="space-y-2">
-                            {% for draft in drafts %}
-                            <li class="bg-white p-3 rounded shadow-sm text-sm text-gray-600 border border-gray-200">
-                                {{ draft.updated_at|date:"m/d H:i" }} 저장됨
+                            {% for block in blocks %}
+                            <li class="draft-item bg-white p-3 rounded shadow-sm text-sm text-gray-600 border border-gray-200 cursor-pointer hover:border-purple-400 transition flex justify-between items-center" 
+                                data-novel-id="{{ block.novel.id|default:'none' }}"
+                                data-context="{{ block.setup_context}}"
+                                onclick="openBlockModal(this)">
+                                <span>{{ block.created_at|date:"m/d H:i" }} 작성된 블록</span>
+                                <span class="text-xs font-bold text-purple-600 bg-purple-100 px-2 py-1 rounded">내용 보기</span>
                             </li>
                             {% empty %}
-                            <li class="text-sm text-gray-500">임시저장된 블록이 없습니다.</li>
+                            <li class="text-sm text-gray-500">저장된 블록이 없습니다.</li>
                             {% endfor %}
+                            
+                            <!-- 💡 자바스크립트 필터링 후 결과가 없을 때 보여줄 메시지 -->
+                            <!-- <li id="empty-draft-msg" class="text-sm text-gray-500 hidden">해당 세계관에서 저장된 블록이 없습니다.</li> -->
                         </ul>
                     </div>
                 </div>
@@ -131,6 +138,24 @@
             </button>
         </section>
 
+    </div>
+</div>
+
+<!-- 블록 내용 확인용 모달(팝업) 뼈대 -->
+<div id="block-detail-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-50 p-4">
+    <div class="bg-white w-full max-w-2xl rounded-xl shadow-2xl flex flex-col max-h-[80vh] overflow-hidden">
+        <div class="p-5 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+            <h3 class="font-bold text-gray-800 text-lg">📝 당시 작성한 블록 지시사항</h3>
+            <button onclick="closeBlockModal()" class="text-gray-400 hover:text-gray-700 transition">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        <!-- 자바스크립트가 JSON 데이터를 풀어서 여기에 넣어줍니다 -->
+        <div id="block-modal-content" class="p-6 overflow-y-auto flex-1 space-y-4 bg-slate-50">
+        </div>
+        <div class="p-4 border-t border-gray-200 text-right bg-white">
+            <button onclick="closeBlockModal()" class="px-5 py-2.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-bold transition">닫기</button>
+        </div>
     </div>
 </div>
 

@@ -1,7 +1,8 @@
 from django.contrib import admin
 from .models import (
     AuthorProfile, Novel, StoryElement,
-    CharacterDetail, FactionDetail, ItemDetail, LocationDetail, EventDetail, Episode
+    CharacterDetail, FactionDetail, ItemDetail, LocationDetail, EventDetail, ConceptDetail, 
+    Episode, TemporaryDraft, BlockHistorySnapshot
 )
 
 @admin.register(AuthorProfile)
@@ -37,6 +38,10 @@ class EventDetailInline(admin.StackedInline):
     model = EventDetail
     can_delete = False
 
+class ConceptDetailInline(admin.StackedInline):
+    model = ConceptDetail
+    can_delete = False
+
 @admin.register(StoryElement)
 class StoryElementAdmin(admin.ModelAdmin):
     # 폴더 경로(folder_path)와 키워드(keyword_name)를 띄움
@@ -64,7 +69,8 @@ class StoryElementAdmin(admin.ModelAdmin):
         FactionDetailInline,
         ItemDetailInline,
         LocationDetailInline,
-        EventDetailInline
+        EventDetailInline,
+        ConceptDetailInline
     ]
 
 @admin.register(Episode)
@@ -81,9 +87,25 @@ class EpisodeAdmin(admin.ModelAdmin):
     # 어드민에서 함부로 수정하면 안 되는 필드 (읽기 전용)
     readonly_fields = ('id', 'created_at', 'updated_at')
 
+# 임시저장 관리자
+@admin.register(TemporaryDraft)
+class TemporaryDraftAdmin(admin.ModelAdmin):
+    list_display = ('author', 'novel', 'updated_at', 'is_deleted')
+    list_filter = ('author', 'novel', 'is_deleted')
+    readonly_fields = ('id', 'updated_at')
+
+# 블록 스냅샷 관리자
+@admin.register(BlockHistorySnapshot)
+class BlockHistorySnapshotAdmin(admin.ModelAdmin):
+    list_display = ('author', 'novel', 'created_at', 'is_deleted')
+    list_filter = ('author', 'novel', 'is_deleted')
+    readonly_fields = ('id', 'created_at')
+
+
 # 새로 만든 5개의 세부 확장 테이블도 어드민에서 관리할 수 있도록 기본 등록
 admin.site.register(CharacterDetail)
 admin.site.register(FactionDetail)
 admin.site.register(ItemDetail)
 admin.site.register(LocationDetail)
 admin.site.register(EventDetail)
+admin.site.register(ConceptDetail)

@@ -105,7 +105,7 @@ function filterEpisodes(novelId) {
     episodes.forEach(ep => {
         // '전체 보기'이거나 해당 소설 ID와 일치하면 보여줌
         if (novelId === 'all' || ep.dataset.novelId === novelId.toString()) {
-            ep.style.display = 'flex'; // Tailwind flex 클래스와 맞춤
+            ep.style.display = 'flex';
             visibleCount++;
         } else {
             ep.style.display = 'none';
@@ -121,4 +121,81 @@ function filterEpisodes(novelId) {
             emptyMsg.classList.add('hidden');
         }
     }
+
+    // 우측 블록 숨김/표시 처리
+    const drafts = document.querySelectorAll('.draft-item');
+    let visibleDraftCount = 0;
+
+    drafts.forEach(draft => {
+        if (novelId === 'all' || draft.dataset.novelId === novelId.toString()) {
+            draft.style.display = 'block'; 
+            visibleDraftCount++;
+        } else {
+            draft.style.display = 'none';
+        }
+    });
+
+    const emptyDraftMsg = document.getElementById('empty-draft-msg');
+    if (emptyDraftMsg) {
+        if (visibleDraftCount === 0) {
+            emptyDraftMsg.classList.remove('hidden');
+        } else {
+            emptyDraftMsg.classList.add('hidden');
+        }
+    }
+}
+
+function openBlockModal(element) {
+    // 숨겨둔 JSON 데이터 가져오기
+    const contextData = element.getAttribute('data-context');
+    const modalContent = document.getElementById('block-modal-content');
+
+    const promptLabels = {
+        "goal_chars": "목표 글자수",
+        "characters": "상황 키워드",
+        "start": "시작점",
+        "situation": "상황",
+        "climax": "절정",
+        "next": "다음 블록 연결",
+    };
+    
+    // 내용 초기화
+    modalContent.innerHTML = '';
+
+    try {
+        if (!contextData || contextData === 'null' || contextData === '[]') {
+            modalContent.innerHTML = '<p class="text-gray-500 text-center py-8">저장된 상세 지시사항이 없습니다.</p>';
+        } else {
+            // JSON 문자열을 자바스크립트 객체(배열)로 변환
+            const blocks = JSON.parse(contextData);
+            
+            // 각 블록(방)마다 예쁜 HTML 상자 만들기
+            blocks.forEach((block, index) => {
+                let blockHtml = `<div class="bg-white p-5 rounded-lg border border-gray-200 shadow-sm">
+                                    <h4 class="font-bold text-purple-700 mb-3 border-b pb-2">블록 ${index + 1}</h4>
+                                    <ul class="space-y-2 text-sm text-gray-700">`;
+                
+                // 블록 안의 항목(ex: 목표, 분위기 등)을 리스트로 출력
+                for (const [key, value] of Object.entries(block)) {
+                    if (value && value.trim() !== '') {
+                        const displayKey = promptLabels[key] || key;
+                        blockHtml += `<li><span class="font-semibold text-slate-800 bg-slate-100 px-2 py-1 rounded mr-2">${displayKey}</span> ${value}</li>`;
+                    }
+                }
+                blockHtml += `</ul></div>`;
+                modalContent.innerHTML += blockHtml;
+            });
+        }
+    } catch (e) {
+        console.error("블록 데이터 파싱 에러:", e);
+        modalContent.innerHTML = '<p class="text-red-500 text-center py-8">데이터를 불러오는 중 오류가 발생했습니다.</p>';
+    }
+
+    // 4. 모달창 화면에 표시
+    document.getElementById('block-detail-modal').classList.remove('hidden');
+}
+
+// 블록 모달 닫기
+function closeBlockModal() {
+    document.getElementById('block-detail-modal').classList.add('hidden');
 }

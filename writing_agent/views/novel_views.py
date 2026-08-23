@@ -1,7 +1,7 @@
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from ..models import Novel, Episode, TemporaryDraft, AuthorProfile
+from ..models import Novel, Episode, TemporaryDraft, AuthorProfile, BlockHistorySnapshot
 
 @login_required
 def world_list_view(request):
@@ -48,9 +48,9 @@ def delete_novel(request, novel_id):
 @login_required
 def settings_archive_view(request):
     # 작가(로그인 유저)에 종속된 데이터만 격리 조회 및 소프트 딜리트 필터링 적용
-    my_novels = Novel.objects.filter(author=request.user).exclude(title='[자유 창작 노트 (기본)]')
+    my_novels = Novel.objects.filter(author=request.user).exclude(title='자유 창작 노트 (기본)')
     my_episodes = Episode.objects.filter(author=request.user, is_deleted=False).order_by('-updated_at')
-    my_drafts = TemporaryDraft.objects.filter(author=request.user, is_deleted=False).order_by('-updated_at')
+    my_blocks = BlockHistorySnapshot.objects.filter(author=request.user, is_deleted=False).order_by('-created_at')
     
     # 뱃지 및 스탯 관리를 위한 프로필 조회 (없으면 자동 생성)
     author_profile, _ = AuthorProfile.objects.get_or_create(user=request.user)
@@ -58,7 +58,7 @@ def settings_archive_view(request):
     return render(request, "settings.html", {
         "novels": my_novels,
         "episodes": my_episodes,
-        "drafts": my_drafts,
+        "blocks": my_blocks,
         "profile": author_profile,
     })
 

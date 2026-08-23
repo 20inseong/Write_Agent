@@ -195,8 +195,16 @@ def generate_single_block_api(request: HttpRequest, novel_id: int = None) -> Jso
 
 @login_required
 @require_POST
-def save_temp_draft(request: HttpRequest) -> JsonResponse:
+def save_temp_draft(request: HttpRequest, novel_id: int = None) -> JsonResponse:
     try:
+        if novel_id:
+            novel = get_object_or_404(Novel, id=novel_id, author=request.user)
+        else:
+            novel, _ = Novel.objects.get_or_create(
+                author=request.user,
+                title="자유 창작 노트 (기본)"
+            )
+
         data = json.loads(request.body)
         
         # 프론트에서 넘어온 JSON 데이터 파싱 (안전하게 get으로 추출)
@@ -217,6 +225,7 @@ def save_temp_draft(request: HttpRequest) -> JsonResponse:
         # 현재 로그인한 작가 기준으로 임시저장 데이터를 덮어쓰거나 신규 생성
         draft, created = TemporaryDraft.objects.update_or_create(
             author=request.user,
+            novel=novel,
             is_deleted=False,
             defaults=defaults_data
         )
@@ -248,7 +257,6 @@ def clean_generated_text(text: str) -> str:
 @login_required
 @require_POST
 def save_episode_api(request: HttpRequest, novel_id: int = None) -> JsonResponse:
-    # 💡 모든 로직을 try 안으로 넣어서, 에러가 나더라도 브라우저가 원인을 알 수 있게 함!
     try:
         if novel_id:
             novel = get_object_or_404(Novel, id=novel_id, author=request.user)
@@ -279,7 +287,7 @@ def save_episode_api(request: HttpRequest, novel_id: int = None) -> JsonResponse
         )
 
         # 완성본 저장이 끝났으므로 기존 임시저장(TemporaryDraft) 내용 비우기
-        draft = TemporaryDraft.objects.filter(author=request.user, is_deleted=False).first()
+        draft = TemporaryDraft.objects.filter(author=request.user, novel=novel, is_deleted=False).first()
         if draft:
             draft.ai_draft_content = ""
             draft.user_content = ""
