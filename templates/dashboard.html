@@ -18,7 +18,7 @@
 
   <nav class="flex w-full max-w-md flex-col gap-4">
     
-    <!-- 1. 글 이어쓰기 (기본 상태: 비활성화 회색톤) -->
+    <!-- 글 이어쓰기 (기본 상태: 비활성화 회색톤) -->
     <button
       id="btn-continue-writing"
       disabled
@@ -28,7 +28,7 @@
       <span id="continue-title" class="mt-1 text-sm font-medium text-slate-400">저장된 임시 원고가 없습니다.</span>
     </button>
 
-    <!-- 2. 세계관 연동 창작 -->
+    <!-- 세계관 연동 창작 -->
     <a
       href="{% url 'world_list' %}"
       class="flex w-full flex-col items-center justify-center rounded-2xl border border-indigo-200 bg-indigo-600 px-8 py-5 text-white shadow-md transition hover:bg-indigo-700 hover:shadow-lg"
@@ -37,7 +37,7 @@
       <span class="mt-1 text-sm text-indigo-200">DB 데이터를 활용하여 정교하게 글을 씁니다.</span>
     </a>
 
-    <!-- 3. 자유 스케치 -->
+    <!-- 자유 스케치 -->
     <a
       href="{% url 'writer_setup' %}?mode=random"
       class="flex w-full flex-col items-center justify-center rounded-2xl border border-slate-300 bg-white px-8 py-5 text-slate-700 shadow-sm transition hover:border-slate-400 hover:bg-slate-50"
@@ -46,7 +46,7 @@
       <span class="mt-1 text-sm text-slate-400">사전 설정 없이 가볍게 빈 캔버스에서 시작합니다.</span>
     </a>
 
-    <!-- 4. 환경 설정 -->
+    <!-- 환경 설정 -->
     <a
       href="{% url 'settings_archive' %}"
       class="mt-4 flex w-full flex-col items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 px-8 py-5 text-slate-800 shadow-sm transition hover:bg-slate-100 hover:shadow-md"
