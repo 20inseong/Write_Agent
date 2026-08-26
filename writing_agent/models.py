@@ -54,6 +54,35 @@ class StoryElement(models.Model):
 
     def __str__(self):
         return f"[{self.get_category_display()}] {self.name}"
+    
+    @property
+    def completion_rate(self):
+        detail_obj = None
+        if self.category == 'CHARACTER' and hasattr(self, 'character_detail'):
+            detail_obj = self.character_detail
+        elif self.category == 'FACTION' and hasattr(self, 'faction_detail'):
+            detail_obj = self.faction_detail
+        elif self.category == 'ITEM' and hasattr(self, 'item_detail'):
+            detail_obj = self.item_detail
+        elif self.category == 'LOCATION' and hasattr(self, 'location_detail'):
+            detail_obj = self.location_detail
+        elif self.category == 'EVENT' and hasattr(self, 'event_detail'):
+            detail_obj = self.event_detail
+        elif self.category == 'CONCEPT' and hasattr(self, 'concept_detail'):
+            detail_obj = self.concept_detail
+
+        if not detail_obj:
+            return 0
+
+        # 검사할 문자열(CharField, TextField) 필드 추출 (id, 연결키 필드 제외)
+        fields = [f.name for f in detail_obj._meta.fields if isinstance(f, (models.CharField, models.TextField)) and f.name not in ['id', 'element']]
+        
+        if not fields:
+            return 0
+            
+        # 값이 존재하고 공백이 아닌 칸의 개수를 셉니다.
+        filled_count = sum(1 for field in fields if getattr(detail_obj, field) and str(getattr(detail_obj, field)).strip())
+        return int((filled_count / len(fields)) * 100)
 
 
 # 세부 확장 테이블

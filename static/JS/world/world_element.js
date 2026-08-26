@@ -39,7 +39,7 @@ document.addEventListener("DOMContentLoaded", function() {
         breadcrumbContainer.innerHTML = bcHtml;
     }
 
-    // [List 페이지] 우클릭 컨텍스트 메뉴 및 폴더 제어
+    // 우클릭 컨텍스트 메뉴 및 폴더 제어
     const contextMenu = document.getElementById('custom-context-menu');
     let currentContextElementId = null;
     let contextTargetType = 'element';
@@ -99,7 +99,7 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 
-    // [List 페이지] 전역 이벤트 위임 (인라인 onclick 대체)
+    // 전역 이벤트 위임 (인라인 onclick 대체)
     // HTML에 하드코딩된 onclick 속성들을 굳이 지우지 않더라도 작동하도록 전역에서 가로챕니다.
     window.openCreateFolderModal = function() {
         const modal = document.getElementById('create-folder-modal');
