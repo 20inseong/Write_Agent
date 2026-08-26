@@ -18,12 +18,12 @@
           <a href="{% url 'world_list' %}" class="text-slate-400 hover:text-slate-800 transition">내 프로젝트</a><span class="text-slate-300">/</span>
           <a href="{% url 'world_category' novel.id %}" class="text-slate-400 hover:text-slate-800 transition">{{ novel.title }}</a><span class="text-slate-300">/</span>
           <a href="{% url 'world_element_list' novel.id category %}" class="text-slate-400 hover:text-slate-800 transition">{{ category }}</a><span class="text-slate-300">/</span>
-          <span class="text-indigo-700 font-bold view-mode">{{ element.name }}</span>
+          <span class="text-indigo-700 font-bold view-mode truncate inline-block max-w-xs">{{ element.name }}</span>
           <span class="text-indigo-700 font-bold edit-mode hidden">설정 수정 중...</span>
         </nav>
       </div>
 
-      <!-- 💡 수정/저장 전환 버튼 (form="edit-form" 속성으로 바깥에서도 폼 제출 가능) -->
+      <!-- 수정/저장 전환 버튼 -->
       <div class="flex items-center gap-2">
         <button type="button" id="btn-edit-toggle" form="edit-form" class="px-4 py-2 text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition">수정하기</button>
       </div>
@@ -31,7 +31,6 @@
 
     <!-- 중앙 메인 뷰 -->
     <main class="flex-1 overflow-y-auto p-8 md:p-12 lg:px-32 flex justify-center">
-      <!-- 💡 폼 태그로 전체를 감쌈 -->
       <form method="POST" id="edit-form" class="w-full max-w-4xl bg-white p-10 rounded-2xl shadow-sm border border-slate-200">
         {% csrf_token %}
         

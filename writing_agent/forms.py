@@ -5,6 +5,9 @@ from django.contrib.auth.models import User
 class CustomUserCreationForm(UserCreationForm):
     class Meta(UserCreationForm.Meta):
         model = User
+        labels = {
+            'username': '아이디',
+        }
         
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
