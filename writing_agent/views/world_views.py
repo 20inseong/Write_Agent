@@ -1,7 +1,30 @@
+import re
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse
 from ..models import Novel, StoryElement, CharacterDetail, FactionDetail, ItemDetail, LocationDetail, EventDetail, ConceptDetail
+
+def get_unique_element_name(author, novel, category, base_name, is_copy=False):
+    base_qs = StoryElement.objects.filter(author=author, novel=novel, category=category, is_deleted=False)
+    
+    if is_copy:
+        base_name = f"{base_name}_복사본"
+
+    if not base_qs.filter(name=base_name).exists():
+        return base_name
+
+    existing_names = base_qs.filter(name__startswith=base_name).values_list('name', flat=True)
+    max_num = 0
+    pattern = re.compile(rf"^{re.escape(base_name)}\s\((\d+)\)$")
+    
+    for name in existing_names:
+        match = pattern.match(name)
+        if match:
+            num = int(match.group(1))
+            if num > max_num:
+                max_num = num
+                
+    return f"{base_name} ({max_num + 1})"
 
 @login_required
 def world_category_view(request, novel_id):
@@ -32,12 +55,15 @@ def world_element_list_view(request, novel_id, category):
         keyword_name = request.POST.get("keyword_name")
         
         if name and keyword_name:
+            # 중복 검사
+            unique_name = get_unique_element_name(request.user, novel, db_category, name)
+            
             # 뼈대(StoryElement) 생성
             new_element = StoryElement.objects.create(
                 author=request.user,
                 novel=novel,
                 category=db_category,
-                name=name,
+                name=unique_name,
                 keyword_name=keyword_name,
                 folder_path=current_folder
             )
@@ -258,7 +284,6 @@ def world_element_bulk_action(request, novel_id, category):
         # 프론트엔드에서 넘겨줄 데이터들
         action = request.POST.get("action") # 'delete', 'duplicate', 'move'
         current_folder = request.POST.get("current_folder", "/")
-
         is_folder_action = request.POST.get("is_folder_action") == "true"
 
         if is_folder_action:
@@ -298,9 +323,11 @@ def world_element_bulk_action(request, novel_id, category):
             elements.update(folder_path=target_folder)
         elif action == "duplicate":
             for el in elements:
+                unique_name = get_unique_element_name(el.author, el.novel, el.category, el.name, is_copy=True)
+                
                 new_el = StoryElement.objects.create(
                     author=el.author, novel=el.novel, category=el.category,
-                    folder_path=el.folder_path, name=f"{el.name} - 복사본", keyword_name=el.keyword_name
+                    folder_path=el.folder_path, name=unique_name, keyword_name=el.keyword_name
                 )
                 if el.category == 'CHARACTER' and hasattr(el, 'character_detail'):
                     d = el.character_detail

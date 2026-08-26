@@ -12,7 +12,7 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
 
-    // [List 페이지] 빵부스러기(Breadcrumb) 네비게이션 렌더링
+    // 빵부스러기(Breadcrumb) 네비게이션 렌더링
     const configEl = document.getElementById('world-element-config');
     const breadcrumbContainer = document.getElementById('breadcrumb-container');
     
@@ -216,7 +216,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }, 800);
     };
 
-    // [Detail 페이지] 수정/저장 모드 전환 토글
+    // 수정/저장 모드 전환 토글
     const toggleBtn = document.getElementById('btn-edit-toggle');
     if (toggleBtn) {
         toggleBtn.addEventListener('click', function(e) {
