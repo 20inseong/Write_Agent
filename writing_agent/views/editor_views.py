@@ -10,8 +10,9 @@ from google.genai import types
 import re
 
 from ..models import Novel, StoryElement, CharacterDetail, FactionDetail, ItemDetail, LocationDetail, EventDetail, TemporaryDraft, BlockHistorySnapshot, Episode, AuthorProfile
-from ..prompt import prompt_labels, system_prompt
+from ..prompt import prompt_labels, system_prompt, get_tarot_instruction
 from ..utils import generate_saju_prompt
+from ..tarot_data import get_three_tarot_cards
 
 load_dotenv()
 
@@ -277,6 +278,16 @@ def editor(request: HttpRequest, novel_id: int = None) -> HttpResponse:
         if rag_context_text:
             enhanced_system_prompt += f"\n\n[현재 장면 관련 참고 설정]\n{rag_context_text}"
 
+        is_free_writing = (novel.title == "자유 창작 노트 (기본)")
+        
+        past_card, present_card, future_card = get_three_tarot_cards()
+        
+        tarot_instruction = get_tarot_instruction(past_card, present_card, future_card, is_free_writing)
+        enhanced_system_prompt += tarot_instruction
+        
+        print("\n===== 🔮 이번 턴의 타로 스프레드 =====")
+        print(f"과거: {past_card} / 현재: {present_card} / 미래: {future_card}")
+        print("===================================\n")
 
         # 제미나이 API 세팅 (환경 변수에서 키 가져오기)
         api_key = os.environ.get("GEMINI_API_KEY")

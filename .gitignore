@@ -8,5 +8,7 @@ db.sqlite3
 # 환경 변수 (비밀번호, 시크릿 키 등)
 .env
 
-# AI Prompts
+# AI Prompts & saju, tarot data
 prompt.py
+tarot_data.py
+utils.py
