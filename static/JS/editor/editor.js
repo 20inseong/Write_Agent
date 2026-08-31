@@ -108,8 +108,13 @@
       const aiDraftEl = document.getElementById("ai-draft-text");
       const aiContent = aiDraftEl ? aiDraftEl.innerText : "";
       
+      let apiUrl = "/api/save_draft/";
+      if (config.novelId) {
+          apiUrl = `/api/save_draft/${config.novelId}/`;
+      }
+
       try {
-        const res = await fetch("/api/save_draft/", {
+        const res = await fetch(apiUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json", "X-CSRFToken": window.getCookie("csrftoken") },
           body: JSON.stringify({
@@ -218,10 +223,8 @@
         }
 
         let apiUrl = "/api/save-episode/";
-        const pathSegments = window.location.pathname.split('/').filter(Boolean);
-        if (pathSegments.length >= 2 && pathSegments[0] === 'editor' && !isNaN(pathSegments[1])) {
-            const novelId = pathSegments[1];
-            apiUrl = `/api/save-episode/${novelId}/`;
+        if (config.novelId) {
+            apiUrl = `/api/save-episode/${config.novelId}/`;
         }
 
         submitEpisodeBtn.disabled = true;
@@ -288,11 +291,8 @@
         currentBlockData = {};
         formData.forEach((value, key) => { currentBlockData[key] = value; });
 
-        const pathSegments = window.location.pathname.split('/').filter(Boolean);
-        if (pathSegments.length >= 2 && pathSegments[0] === 'editor' && !isNaN(pathSegments[1])) {
-            currentNovelId = pathSegments[1];
-            currentApiUrl = `/api/generate-block/${currentNovelId}/`;
-        }
+        currentNovelId = config.novelId;
+        currentApiUrl = currentNovelId ? `/api/generate-block/${currentNovelId}/` : "/api/generate-block/";
 
         if (currentNovelId) {
             try {

@@ -156,7 +156,8 @@
 <script id="editor-config" type="application/json">
   {
     "dashboardUrl": "{% url 'dashboard' %}",
-    "goalWordCount": {{ goal_word_count|default:5000 }}
+    "goalWordCount": {{ goal_word_count|default:5000 }},
+    "novelId": {% if novel.id %}{{ novel.id }}{% else %}null{% endif %}
   }
 </script>
 
