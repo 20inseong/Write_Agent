@@ -520,4 +520,35 @@ document.addEventListener("DOMContentLoaded", function() {
             });
         }
     }
+
+    // --- [사이드바 검색 필터링 로직 추가] ---
+    const searchInput = document.getElementById('world-search-input');
+    const elementItems = document.querySelectorAll('.world-element-item');
+    const categoryGroups = document.querySelectorAll('.world-category-group');
+
+    if (searchInput) {
+        searchInput.addEventListener('input', function(e) {
+            const keyword = e.target.value.toLowerCase().trim();
+
+            elementItems.forEach(item => {
+                const name = item.getAttribute('data-name').toLowerCase();
+                // 검색어가 포함되어 있으면 보이고, 아니면 숨김 처리
+                if (name.includes(keyword)) {
+                    item.style.display = '';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+
+            // 내부 요소가 모두 숨겨진 카테고리 그룹(예: '인물', '물건' 타이틀)도 숨기기
+            categoryGroups.forEach(group => {
+                const visibleItems = Array.from(group.querySelectorAll('.world-element-item')).filter(item => item.style.display !== 'none');
+                if (visibleItems.length === 0) {
+                    group.style.display = 'none';
+                } else {
+                    group.style.display = '';
+                }
+            });
+        });
+    }
 });

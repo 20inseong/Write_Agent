@@ -34,6 +34,48 @@ def writer_setup(request: HttpRequest, novel_id: int = None) -> HttpResponse:
         except json.JSONDecodeError:
             continue
     saved_setup_context = json.dumps(snapshots_data, ensure_ascii=False)
+    
+    # 논리적 삭제(is_deleted=True)가 아닌 현재 작품의 모든 설정을 가져옵니다. 폴더 제외
+    world_elements = StoryElement.objects.filter(
+        novel=novel, 
+        author=request.user, 
+        is_deleted=False
+    ).exclude(
+        name="__FOLDER_DUMMY__"
+    ).order_by('category', 'name')
+    
+    # 카테고리별로 묶어서 템플릿으로 전달하기 위해 딕셔너리로 분류합니다.
+    categorized_elements = {}
+    for element in world_elements:
+        cat_name = element.get_category_display()
+        if cat_name not in categorized_elements:
+            categorized_elements[cat_name] = []
+        
+        # 카테고리별 세부 텍스트를 구성 (앞서 API 뷰에서 쓰던 방식과 유사하게 조립)
+        detail_text = "상세 정보가 없습니다."
+        if element.category == 'CHARACTER' and hasattr(element, 'character_detail'):
+            d = element.character_detail
+            detail_text = f"이명: {d.aliases}<br>성격: {d.personality}<br>특징: {d.appearance}<br>주력능력: {d.main_skill}<br>무기: {d.weapon}<br>욕망: {d.desire}<br>기타: {d.other_details}"
+        elif element.category == 'FACTION' and hasattr(element, 'faction_detail'):
+            d = element.faction_detail
+            detail_text = f"성향: {d.alignment}<br>이념: {d.ideology}<br>핵심인물: {d.key_members}<br>기타: {d.other_details}"
+        elif element.category == 'ITEM' and hasattr(element, 'item_detail'):
+            d = element.item_detail
+            detail_text = f"분류: {d.item_type}<br>외형: {d.appearance}<br>효과: {d.effect}<br>기타: {d.other_details}"
+        elif element.category == 'LOCATION' and hasattr(element, 'location_detail'):
+            d = element.location_detail
+            detail_text = f"지역: {d.region}<br>통치자: {d.ruler}<br>특징: {d.significance}<br>기타: {d.other_details}"
+        elif element.category == 'EVENT' and hasattr(element, 'event_detail'):
+            d = element.event_detail
+            detail_text = f"시점: {d.timeline}<br>원인: {d.trigger}<br>결과: {d.impact}<br>기타: {d.other_details}"
+        elif element.category == 'CONCEPT' and hasattr(element, 'concept_detail'):
+            d = element.concept_detail
+            detail_text = f"설명: {d.description}<br>적용: {d.application}<br>기타: {d.other_details}"
+
+        categorized_elements[cat_name].append({
+            'name': element.name,
+            'details': detail_text
+        })
 
     return render(
         request, 
@@ -41,7 +83,8 @@ def writer_setup(request: HttpRequest, novel_id: int = None) -> HttpResponse:
         {
             "initial_block_index": 1, 
             "novel": novel,
-            "saved_setup_context": saved_setup_context
+            "saved_setup_context": saved_setup_context,
+            "categorized_elements": categorized_elements
         }
     )
 
