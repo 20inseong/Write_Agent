@@ -51,26 +51,25 @@ def writer_setup(request: HttpRequest, novel_id: int = None) -> HttpResponse:
         if cat_name not in categorized_elements:
             categorized_elements[cat_name] = []
         
-        # 카테고리별 세부 텍스트를 구성 (앞서 API 뷰에서 쓰던 방식과 유사하게 조립)
         detail_text = "상세 정보가 없습니다."
         if element.category == 'CHARACTER' and hasattr(element, 'character_detail'):
             d = element.character_detail
-            detail_text = f"이명: {d.aliases}<br>성격: {d.personality}<br>특징: {d.appearance}<br>주력능력: {d.main_skill}<br>무기: {d.weapon}<br>욕망: {d.desire}<br>기타: {d.other_details}"
+            detail_text = f"<div class='mb-2'><strong>이명:</strong> {d.aliases}</div><div class='mb-2'><strong>성격:</strong> {d.personality}</div><div class='mb-2'><strong>특징:</strong> {d.appearance}</div><div class='mb-2'><strong>주력능력:</strong> {d.main_skill}</div><div class='mb-2'><strong>무기:</strong> {d.weapon}</div><div class='mb-2'><strong>욕망:</strong> {d.desire}</div><div><strong>기타:</strong> {d.other_details}</div>"
         elif element.category == 'FACTION' and hasattr(element, 'faction_detail'):
             d = element.faction_detail
-            detail_text = f"성향: {d.alignment}<br>이념: {d.ideology}<br>핵심인물: {d.key_members}<br>기타: {d.other_details}"
+            detail_text = f"<div class='mb-2'><strong>성향:</strong> {d.alignment}</div><div class='mb-2'><strong>이념:</strong> {d.ideology}</div><div class='mb-2'><strong>핵심인물:</strong> {d.key_members}</div><div><strong>기타:</strong> {d.other_details}</div>"
         elif element.category == 'ITEM' and hasattr(element, 'item_detail'):
             d = element.item_detail
-            detail_text = f"분류: {d.item_type}<br>외형: {d.appearance}<br>효과: {d.effect}<br>기타: {d.other_details}"
+            detail_text = f"<div class='mb-2'><strong>분류:</strong> {d.item_type}</div><div class='mb-2'><strong>외형:</strong> {d.appearance}</div><div class='mb-2'><strong>효과:</strong> {d.effect}</div><div><strong>기타:</strong> {d.other_details}</div>"
         elif element.category == 'LOCATION' and hasattr(element, 'location_detail'):
             d = element.location_detail
-            detail_text = f"지역: {d.region}<br>통치자: {d.ruler}<br>특징: {d.significance}<br>기타: {d.other_details}"
+            detail_text = f"<div class='mb-2'><strong>지역:</strong> {d.region}</div><div class='mb-2'><strong>통치자:</strong> {d.ruler}</div><div class='mb-2'><strong>특징:</strong> {d.significance}</div><div><strong>기타:</strong> {d.other_details}</div>"
         elif element.category == 'EVENT' and hasattr(element, 'event_detail'):
             d = element.event_detail
-            detail_text = f"시점: {d.timeline}<br>원인: {d.trigger}<br>결과: {d.impact}<br>기타: {d.other_details}"
+            detail_text = f"<div class='mb-2'><strong>시점:</strong> {d.timeline}</div><div class='mb-2'><strong>원인:</strong> {d.trigger}</div><div class='mb-2'><strong>결과:</strong> {d.impact}</div><div><strong>기타:</strong> {d.other_details}</div>"
         elif element.category == 'CONCEPT' and hasattr(element, 'concept_detail'):
             d = element.concept_detail
-            detail_text = f"설명: {d.description}<br>적용: {d.application}<br>기타: {d.other_details}"
+            detail_text = f"<div class='mb-2'><strong>설명:</strong> {d.description}</div><div class='mb-2'><strong>적용:</strong> {d.application}</div><div><strong>기타:</strong> {d.other_details}</div>"
 
         categorized_elements[cat_name].append({
             'name': element.name,
