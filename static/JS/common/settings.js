@@ -128,7 +128,7 @@ function filterEpisodes(novelId) {
 
     drafts.forEach(draft => {
         if (novelId === 'all' || draft.dataset.novelId === novelId.toString()) {
-            draft.style.display = 'block'; 
+            draft.style.display = 'flex'; 
             visibleDraftCount++;
         } else {
             draft.style.display = 'none';

@@ -174,10 +174,10 @@
         try {
             await navigator.clipboard.writeText(textToCopy);
             alert("텍스트가 클립보드에 복사되었습니다!\n열리는 검사기 창에서 붙여넣기(Ctrl+V) 해주세요.");
-            window.open("https://search.naver.com/search.naver?query=맞춤법검사기", "_blank");
+            window.open("https://lab.incruit.com/tools/spell/", "_blank");
         } catch (err) {
             alert("복사에 실패했습니다. 에디터에서 직접 복사 후 검사해주세요.");
-            window.open("https://search.naver.com/search.naver?query=맞춤법검사기", "_blank");
+            window.open("https://lab.incruit.com/tools/spell/", "_blank");
         }
         });
     }
