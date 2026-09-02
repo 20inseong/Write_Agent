@@ -68,6 +68,8 @@
     const hasSavedDraft = "{{ has_temp_draft|yesno:'true,false' }}" === "true";
     const savedTime = "{{ draft_updated_at|default:'' }}";
 
+    const draftNovelId = "{{ draft_novel_id|default:'' }}";
+
     // 저장된 원고가 있을 경우에만 버튼 활성화
     if (hasSavedDraft) {
       // 비활성화 속성 제거 및 커서 변경
@@ -83,7 +85,11 @@
 
       // 클릭 시 에디터(이어쓰기 모드)로 이동하도록 URL 맵핑
       continueBtn.addEventListener("click", function() {
-        window.location.href = "{% url 'editor' %}?mode=continue"; 
+        if (draftNovelId && draftNovelId !== "None") {
+          window.location.href = `/editor/${draftNovelId}/?mode=continue`;
+        } else {
+          window.location.href = "{% url 'editor' %}?mode=continue"; 
+        }
       });
     }
   });

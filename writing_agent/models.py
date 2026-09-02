@@ -3,7 +3,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.conf import settings
 
-# 유저 스탯 테이블: 작가의 오리지널리티 점수와 뱃지를 독립적으로 관리
+# 유저 스탯 테이블
 class AuthorProfile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='profile')
     pen_name = models.CharField(max_length=50, blank=True, null=True, verbose_name="필명")
@@ -90,30 +90,30 @@ class StoryElement(models.Model):
 class CharacterDetail(models.Model):
     # 1:1 연결 고리
     element = models.OneToOneField(StoryElement, on_delete=models.CASCADE, related_name='character_detail')
-    
-    # [기본 정보]
+
+    # 기본 정보
     aliases = models.CharField(max_length=100, blank=True, verbose_name="이명/별호")
     birthday = models.CharField(max_length=100, blank=True, verbose_name="생일")
     
-    # [외형 및 분위기]
+    # 외형 및 분위기
     appearance = models.TextField(blank=True, verbose_name="첫인상 및 신체적 특징")
     clothing = models.CharField(max_length=200, blank=True, verbose_name="주요 복식")
     
-    # [능력치]
+    # 능력치
     main_skill = models.CharField(max_length=200, blank=True, verbose_name="주력 능력/스킬")
     level = models.CharField(max_length=100, blank=True, verbose_name="현재 수준/경지")
     weapon = models.CharField(max_length=100, blank=True, verbose_name="주로 사용하는 것(무기, 물건)")
     
-    # [성향 및 목표]
+    # 성향 및 목표
     personality = models.TextField(blank=True, verbose_name="성격 (장/단점)")
     desire = models.TextField(blank=True, verbose_name="궁극적인 욕망")
     taboo = models.TextField(blank=True, verbose_name="금기 (절대 하지 않을 행동)")
     
-    # [관계망]
+    # 관계망
     allies = models.TextField(blank=True, verbose_name="우호 관계")
     enemies = models.TextField(blank=True, verbose_name="적대 관계")
 
-    # [시스템 Hidden] AI 역산 사주 및 오행 데이터 전용 공간
+    # 시스템 Hidden
     saju_meta = models.JSONField(default=dict, blank=True, verbose_name="사주/오행 메타 데이터")
 
     other_details = models.TextField(blank=True, null=True, verbose_name="기타 사항")
@@ -231,7 +231,7 @@ class Episode(models.Model):
     title = models.CharField(max_length=200, verbose_name="에피소드 제목", default="새 에피소드")
     content = models.TextField(verbose_name="완성된 소설 본문")
     
-    # 게이미피케이션(뱃지/랭킹) 활용을 위한 저장 당시의 AI 일치도 기록
+    # 게이미피케이션 활용을 위한 저장 당시의 AI 일치도 기록
     ai_similarity = models.PositiveIntegerField(default=0, verbose_name="AI 일치도(%)")
     
     # 작가 실수 방지용 논리적 삭제

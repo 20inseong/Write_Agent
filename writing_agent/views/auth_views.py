@@ -30,6 +30,7 @@ def signup_view(request):
 def dashboard(request: HttpRequest) -> HttpResponse:
     has_temp_draft = False
     draft_updated_at = ""
+    draft_novel_id = ""
 
     # 현재 로그인한 작가의 임시 저장 데이터가 있는지 조회 (가장 최근 것 1개)
     draft = TemporaryDraft.objects.filter(author=request.user, is_deleted=False).order_by('-updated_at').first()
@@ -38,8 +39,11 @@ def dashboard(request: HttpRequest) -> HttpResponse:
         has_temp_draft = True
         local_updated_at = timezone.localtime(draft.updated_at)
         draft_updated_at = local_updated_at.strftime('%m/%d %H:%M')
+        if draft.novel and draft.novel.title != "자유 창작 노트 (기본)":
+            draft_novel_id = draft.novel.id
 
     return render(request, "dashboard.html", {
         "has_temp_draft": has_temp_draft,
-        "draft_updated_at": draft_updated_at
+        "draft_updated_at": draft_updated_at,
+        "draft_novel_id": draft_novel_id
     })

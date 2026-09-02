@@ -404,6 +404,7 @@ def editor(request: HttpRequest, novel_id: int = None) -> HttpResponse:
         request, 
         "editor.html", 
         {
+            "novel": novel,
             "ai_content": ai_draft_text,
             "user_content": user_draft_text,
             "goal_word_count": author_profile.goal_word_count
