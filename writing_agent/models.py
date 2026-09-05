@@ -9,7 +9,6 @@ class AuthorProfile(models.Model):
     pen_name = models.CharField(max_length=50, blank=True, null=True, verbose_name="필명")
     originality_point = models.PositiveIntegerField(default=0, verbose_name="오리지널리티 누적 포인트")
     badges = models.JSONField(default=dict, blank=True, verbose_name="획득 뱃지 목록")
-
     ai_temperature = models.FloatField(default=0.7, verbose_name="AI 창의성")
     goal_word_count = models.PositiveIntegerField(default=5000, verbose_name="목표 글자 수")
 
