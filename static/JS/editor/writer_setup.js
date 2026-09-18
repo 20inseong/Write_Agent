@@ -157,6 +157,19 @@ document.addEventListener("DOMContentLoaded", function() {
             const nextIndex = blocks.length + 1;
             addBtn.setAttribute('hx-get', `${config.addBlockUrl}?index=${nextIndex}`);
             if (typeof htmx !== 'undefined') htmx.process(addBtn); 
+            
+            // 전체 블록 3개 제한 및 버튼 비활성화
+            if (blocks.length >= 3) {
+                addBtn.disabled = true; // HTML disabled 속성 추가
+                addBtn.classList.add('opacity-50', 'cursor-not-allowed'); // Tailwind 반투명 & 금지 커서 적용
+                addBtn.style.pointerEvents = 'none'; // 마우스 클릭(HTMX 트리거) 원천 차단
+                addBtn.innerText = "🔒 최대 3개의 블록만 작성 가능합니다"; 
+            } else {
+                addBtn.disabled = false;
+                addBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                addBtn.style.pointerEvents = 'auto';
+                addBtn.innerText = "+ 블록 추가하기"; 
+            }
         }
     }
 
