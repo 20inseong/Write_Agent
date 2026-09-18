@@ -11,6 +11,8 @@ class AuthorProfile(models.Model):
     badges = models.JSONField(default=dict, blank=True, verbose_name="획득 뱃지 목록")
     ai_temperature = models.FloatField(default=0.7, verbose_name="AI 창의성")
     goal_word_count = models.PositiveIntegerField(default=5000, verbose_name="목표 글자 수")
+    daily_draft_count = models.PositiveIntegerField(default=0, verbose_name="일일 초안 작성 횟수")
+    last_draft_date = models.DateField(auto_now_add=True, null=True, verbose_name="마지막 초안 작성일")
 
     def __str__(self):
         return f"{self.user.username} 작가 프로필"
@@ -241,3 +243,30 @@ class Episode(models.Model):
 
     def __str__(self):
         return f"[{self.novel.title}] {self.title}"
+    
+# 공지사항 시스템 테이블
+class Notice(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    title = models.CharField(max_length=200, verbose_name="공지 제목")
+    content = models.TextField(verbose_name="공지 내용")
+    
+    # 시스템 데이터도 논리적 삭제 규칙 통일
+    is_deleted = models.BooleanField(default=False, verbose_name="삭제 여부")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title
+
+# 베타 테스터 전용 접속 코드 테이블
+class BetaCode(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    code = models.CharField(max_length=50, unique=True, verbose_name="추천 코드")
+    issued_to = models.CharField(max_length=100, blank=True, verbose_name="발급 대상자 (메모용)")
+    
+    # 코드 재사용 방지용 상태값
+    is_used = models.BooleanField(default=False, verbose_name="사용 여부")
+    used_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="사용한 유저")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.code} ({'사용됨' if self.is_used else '미사용'})"

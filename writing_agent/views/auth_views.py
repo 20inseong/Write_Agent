@@ -4,7 +4,7 @@ from django.contrib.auth import login
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 
-from ..models import TemporaryDraft
+from ..models import TemporaryDraft, BetaCode
 from ..forms import CustomUserCreationForm
 
 def home(request: HttpRequest) -> HttpResponse:
@@ -19,6 +19,10 @@ def signup_view(request):
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
+            beta_obj = form.cleaned_data.get('beta_code')
+            beta_obj.is_used = True
+            beta_obj.used_by = user
+            beta_obj.save()
             login(request, user)  # 회원가입 성공 시 자동 로그인
             return redirect('dashboard')
     else:

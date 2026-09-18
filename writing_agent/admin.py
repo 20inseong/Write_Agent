@@ -2,8 +2,21 @@ from django.contrib import admin
 from .models import (
     AuthorProfile, Novel, StoryElement,
     CharacterDetail, FactionDetail, ItemDetail, LocationDetail, EventDetail, ConceptDetail, 
-    Episode, TemporaryDraft, BlockHistorySnapshot
+    Episode, TemporaryDraft, BlockHistorySnapshot, BetaCode, Notice
 )
+
+@admin.register(BetaCode)
+class BetaCodeAdmin(admin.ModelAdmin):
+    # 관리자 리스트 화면에서 보여줄 컬럼들
+    list_display = ('code', 'issued_to', 'is_used', 'used_by', 'created_at')
+    # 검색 기능
+    search_fields = ('code', 'issued_to')
+    # 필터 기능
+    list_filter = ('is_used',)
+
+@admin.register(Notice)
+class NoticeAdmin(admin.ModelAdmin):
+    list_display = ('title', 'created_at', 'is_deleted')
 
 @admin.register(AuthorProfile)
 class AuthorProfileAdmin(admin.ModelAdmin):
