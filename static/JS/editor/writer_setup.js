@@ -164,6 +164,8 @@ document.addEventListener("DOMContentLoaded", function() {
         updateBlockNumbers();
     });
 
+    window.updateBlockNumbers = updateBlockNumbers;
+
     // --- [폼 검증 및 전송 (RAG)] ---
     const form = document.getElementById('editor-setup-form');
     if (form) {
