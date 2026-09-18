@@ -406,7 +406,7 @@ def editor(request: HttpRequest, novel_id: int = None) -> HttpResponse:
             # 제미나이 API 호출
             try:
                 response = client.models.generate_content(
-                    model='gemini-2.5-flash',
+                    model='gemini-3.1-flash-lite',
                     contents=user_prompt,
                     config=types.GenerateContentConfig(
                         system_instruction=enhanced_system_prompt,
