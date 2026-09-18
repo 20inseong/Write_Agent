@@ -85,9 +85,12 @@
       <footer class="mt-10 border-t border-slate-200 pt-8">
         <button
           type="submit"
-          class="inline-flex w-full items-center justify-center rounded-xl bg-indigo-600 px-6 py-4 text-base font-semibold text-white shadow-md transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+          id="submit-draft-btn"
+          {% if is_draft_limit_reached %}disabled{% endif %}
+          class="inline-flex w-full items-center justify-center rounded-xl px-6 py-4 text-base font-semibold text-white shadow-md transition focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 
+          {% if is_draft_limit_reached %}bg-slate-400 opacity-50 cursor-not-allowed{% else %}bg-indigo-600 hover:bg-indigo-700{% endif %}"
         >
-          AI 초안 생성 시작
+          {% if is_draft_limit_reached %}🔒 일일 AI 초안 작성 제한(3회) 초과{% else %}AI 초안 생성 시작{% endif %}
         </button>
       </footer>
     </form>
@@ -205,7 +208,8 @@
   {
     "savedSetupContext": "{{ saved_setup_context|escapejs }}",
     "verifyApiUrl": "{% if novel %}{% url 'verify_keywords_api' novel.id %}{% else %}{% endif %}",
-    "addBlockUrl": "{% url 'add_block' %}"
+    "addBlockUrl": "{% url 'add_block' %}",
+    "isDraftLimitReached": {{ is_draft_limit_reached|yesno:"true,false" }}
   }
 </script>
 

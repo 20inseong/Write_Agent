@@ -203,6 +203,18 @@ document.addEventListener("DOMContentLoaded", function() {
         } else {
             const checkInputs = () => {
                 if (!submitBtn) return;
+                if (config.isDraftLimitReached) {
+                    submitBtn.disabled = true;
+                    submitBtn.style.pointerEvents = 'none';
+                    submitBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+                    submitBtn.classList.add('opacity-50', 'cursor-not-allowed', 'bg-slate-400');
+                    submitBtn.innerText = '🔒 일일 AI 초안 작성 제한(3회) 초과';
+                    if (tipText) {
+                        tipText.classList.remove('opacity-100', 'h-5');
+                        tipText.classList.add('opacity-0', 'h-0');
+                    }
+                    return; // 방어 끝, 아래 로직 실행 안 함
+                }
                 const inputs = form.querySelectorAll('input:not([type="hidden"]):not([type="number"]):not(.quick-input), textarea:not(.quick-input)');
                 let filledCount = 0;
                 let totalCount = 0;
@@ -362,6 +374,11 @@ document.addEventListener("DOMContentLoaded", function() {
         }
 
         form.addEventListener('submit', async function(e) {
+            if (config.isDraftLimitReached) {
+                e.preventDefault();
+                return false;
+            }
+
             if (isRandomMode || isVerified || !config.verifyApiUrl) {
                 showLoading('AI가 소설 본문을 집필하고 있습니다...');
                 return;

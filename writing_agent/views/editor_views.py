@@ -5,6 +5,7 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_GET
 from django.contrib.auth.decorators import login_required
+from django.utils import timezone
 from google import genai
 from google.genai import types
 import re
@@ -75,6 +76,15 @@ def writer_setup(request: HttpRequest, novel_id: int = None) -> HttpResponse:
             'name': element.name,
             'details': detail_text
         })
+        
+    author_profile, _ = AuthorProfile.objects.get_or_create(user=request.user)
+    today = timezone.localdate()
+    if author_profile.last_draft_date != today:
+        author_profile.daily_draft_count = 0
+        author_profile.last_draft_date = today
+        author_profile.save()
+    
+    is_draft_limit_reached = author_profile.daily_draft_count >= 3
 
     return render(
         request, 
@@ -83,7 +93,8 @@ def writer_setup(request: HttpRequest, novel_id: int = None) -> HttpResponse:
             "initial_block_index": 1, 
             "novel": novel,
             "saved_setup_context": saved_setup_context,
-            "categorized_elements": categorized_elements
+            "categorized_elements": categorized_elements,
+            "is_draft_limit_reached": is_draft_limit_reached
         }
     )
 
@@ -330,6 +341,32 @@ def editor(request: HttpRequest, novel_id: int = None) -> HttpResponse:
         print("\n===== 🔮 이번 턴의 타로 스프레드 =====")
         print(f"과거: {past_card} / 현재: {present_card} / 미래: {future_card}")
         print("===================================\n")
+        
+        today = timezone.localdate()
+        
+        # 날짜가 바뀌었으면 카운트 초기화
+        if author_profile.last_draft_date != today:
+            author_profile.daily_draft_count = 0
+            author_profile.last_draft_date = today
+            author_profile.save()
+
+        # 3회 이상이면 API를 호출하지 않고 에디터 화면으로 바로 반환 (Early Return)
+        if author_profile.daily_draft_count >= 3:
+            ai_draft_text = "🔒 일일 AI 초안 작성 횟수(3회)를 모두 소진하셨습니다. 자정 이후에 다시 이용해 주세요!\n\n(입력하신 씬 설정과 키워드는 스냅샷으로 안전하게 저장되었습니다. 오늘은 우측 에디터에 직접 문장을 채워보시는 건 어떨까요?)"
+            return render(
+                request, 
+                "editor.html", 
+                {
+                    "novel": novel,
+                    "ai_content": ai_draft_text,
+                    "user_content": user_draft_text,
+                    "goal_word_count": author_profile.goal_word_count
+                } 
+            )
+
+        # 3회 미만이면 횟수 1 증가 후 정상 진행
+        author_profile.daily_draft_count += 1
+        author_profile.save()
 
         # 제미나이 API 세팅 (환경 변수에서 키 가져오기)
         api_key = os.environ.get("GEMINI_API_KEY")
