@@ -6,6 +6,7 @@ from .views import api_views
 urlpatterns = [
     path("", views.home, name="home"),
     path("dashboard/", views.dashboard, name="dashboard"),
+    path("notices/modal/", views.notice_modal_view, name="notice_modal"),
     path("writer/blocks/add/", views.add_block, name="add_block"),
 
     # 자유 창작용

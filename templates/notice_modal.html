@@ -1,0 +1,73 @@
+<div id="notice-modal-wrapper" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4" onclick="if(event.target === this) this.remove();">
+  <!-- 모달 창 크기 고정 -->
+  <div class="w-full max-w-lg h-[600px] flex flex-col overflow-hidden rounded-xl bg-white shadow-xl relative">
+    
+    <!-- 헤더 -->
+    <div class="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-6 py-4 shrink-0">
+      <div class="flex items-center gap-2">
+        <!-- 뒤로 가기 버튼 (초기엔 숨김) -->
+        <button id="notice-back-btn" class="hidden text-slate-600 hover:text-indigo-600 transition rounded-full p-1 -ml-2" title="목록으로">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+          </svg>
+        </button>
+        <!-- 동적으로 변할 제목 -->
+        <h3 id="notice-header-title" class="text-lg font-bold text-slate-800">📢 공지사항</h3>
+      </div>
+      <button type="button" onclick="document.getElementById('notice-modal-wrapper').remove();" class="text-2xl leading-none text-slate-400 hover:text-slate-600">&times;</button>
+    </div>
+
+    <!-- 1. 리스트 뷰 (초기 화면) -->
+    <div id="notice-list-view" class="overflow-y-auto flex-1 bg-white">
+      {% if notices %}
+        <ul class="divide-y divide-slate-100">
+          {% for notice in notices %}
+            <li>
+              <button type="button" class="w-full text-left px-6 py-4 hover:bg-slate-50 transition flex justify-between items-center group"
+                      onclick="showNoticeDetail('{{ notice.title|escapejs }}', '{{ notice.created_at|date:'Y.m.d' }}', '{{ notice.content|escapejs|linebreaksbr }}')">
+                <span class="font-medium text-slate-700 group-hover:text-indigo-600 truncate mr-4">{{ notice.title }}</span>
+                <span class="text-xs text-slate-400 whitespace-nowrap">{{ notice.created_at|date:"Y.m.d" }}</span>
+              </button>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <div class="flex h-full items-center justify-center text-slate-400 font-medium">새로운 공지사항이 없습니다.</div>
+      {% endif %}
+    </div>
+
+    <!-- 2. 디테일 뷰 (클릭 시 나타나는 상세 내용) -->
+    <div id="notice-detail-view" class="hidden overflow-y-auto p-6 flex-1 bg-white">
+      <h4 id="detail-title" class="text-xl font-bold text-slate-800 mb-2 leading-tight"></h4>
+      <div id="detail-date" class="text-xs text-slate-400 mb-6 pb-4 border-b border-slate-100"></div>
+      <div id="detail-content" class="text-slate-600 text-sm leading-relaxed whitespace-pre-line"></div>
+    </div>
+    
+  </div>
+</div>
+
+<script>
+  // 목록 클릭 시 디테일 뷰 렌더링 및 헤더 변경 함수
+  function showNoticeDetail(title, date, content) {
+    document.getElementById('notice-list-view').classList.add('hidden');
+    document.getElementById('notice-detail-view').classList.remove('hidden');
+    document.getElementById('notice-back-btn').classList.remove('hidden');
+
+    // 아이콘 제거하고 글자만 남기기
+    document.getElementById('notice-header-title').innerText = '공지사항';
+
+    document.getElementById('detail-title').innerText = title;
+    document.getElementById('detail-date').innerText = date;
+    document.getElementById('detail-content').innerHTML = content;
+  }
+
+  // 뒤로 가기 버튼 클릭 시 다시 목록으로 및 헤더 복구
+  document.getElementById('notice-back-btn').addEventListener('click', function() {
+    document.getElementById('notice-list-view').classList.remove('hidden');
+    document.getElementById('notice-detail-view').classList.add('hidden');
+    this.classList.add('hidden');
+    
+    // 아이콘 복구
+    document.getElementById('notice-header-title').innerText = '📢 공지사항';
+  });
+</script>

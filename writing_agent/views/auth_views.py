@@ -4,7 +4,7 @@ from django.contrib.auth import login
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 
-from ..models import TemporaryDraft, BetaCode
+from ..models import TemporaryDraft, BetaCode, Notice
 from ..forms import CustomUserCreationForm
 
 def home(request: HttpRequest) -> HttpResponse:
@@ -51,3 +51,8 @@ def dashboard(request: HttpRequest) -> HttpResponse:
         "draft_updated_at": draft_updated_at,
         "draft_novel_id": draft_novel_id
     })
+    
+@login_required
+def notice_modal_view(request: HttpRequest) -> HttpResponse:
+    notices = Notice.objects.filter(is_deleted=False).order_by('-created_at')
+    return render(request, "notice_modal.html", {"notices": notices})
