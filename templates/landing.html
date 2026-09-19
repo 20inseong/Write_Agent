@@ -1,31 +1,40 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block title %}글쓰기 에이전트{% endblock %}
+{% block title %}Agent W - 순수한 창작의 불꽃{% endblock %}
 
 {% block content %}
-<main class="flex min-h-[calc(100vh-3.5rem)] flex-col items-center justify-center px-4 py-16">
-  <div class="w-full max-w-2xl text-center">
-    <p class="mb-3 text-sm font-semibold uppercase tracking-widest text-indigo-600">AI Writing Studio</p>
-    <h1 class="text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
-      블록 기반으로 집필하는<br class="hidden sm:block"> 스마트 소설 작업실
+<!-- 좌우 분할을 위해 lg:flex-row를 적용하고 중앙 정렬을 맞춥니다 -->
+<main class="mx-auto flex min-h-[calc(100vh-3.5rem)] max-w-6xl flex-col items-center justify-center px-4 py-12 lg:flex-row lg:justify-between lg:gap-16">
+  
+  <!-- 좌측: 텍스트 및 버튼 (데스크탑에서는 왼쪽 정렬, 모바일에서는 중앙 정렬) -->
+  <div class="flex w-full flex-col items-center text-center lg:w-1/2 lg:items-start lg:text-left">
+    <p class="mb-4 text-sm font-bold tracking-[0.2em] text-purple-600">FLAME OF PURE CREATION</p>
+    <h1 class="text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl md:text-6xl lg:leading-tight">
+      인간이 글쓰기를 멈추지 않게 하는<br> 
+      <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600">스마트 소설 작업실</span>
     </h1>
-    <p class="mx-auto mt-6 max-w-lg text-base leading-relaxed text-slate-600">
-      장면별 블록 세팅, AI 초안 생성, 2분할 에디터까지 — 작가의 창작 흐름을 한곳에서 이어갈 수 있습니다.
+    <p class="mt-6 max-w-lg text-lg leading-relaxed text-slate-600">
+      장면별 블록 세팅, AI 초안 생성, 2분할 에디터까지.<br>
+      작가 고유의 문체와 창작의 고뇌는 남겨두고,<br>
+      집필의 속도만 높입니다.
     </p>
-    <div class="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
-      <a
-        href="{% url 'login' %}"
-        class="w-full rounded-xl border border-slate-300 bg-white px-8 py-3.5 text-center text-base font-semibold text-slate-800 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
-      >
-        로그인
+    
+    <!-- 버튼 그룹: '창작 시작하기'를 왼쪽(모바일은 위)으로 빼서 강조 -->
+    <div class="mt-10 flex w-full flex-col gap-4 sm:flex-row sm:justify-center lg:justify-start">
+      <a href="{% url 'signup' %}" class="flex items-center justify-center rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 px-8 py-3.5 text-base font-semibold text-white shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2">
+        창작 시작하기
       </a>
-      <a
-        href="{% url 'signup' %}"
-        class="w-full rounded-xl bg-indigo-600 px-8 py-3.5 text-center text-base font-semibold text-white shadow-md transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
-      >
-        회원가입
+      <a href="{% url 'login' %}" class="flex items-center justify-center rounded-full border border-slate-300 bg-white px-8 py-3.5 text-base font-semibold text-slate-700 shadow-sm transition-all hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2">
+        로그인
       </a>
     </div>
   </div>
+
+  <!-- 우측: 메인 로고 -->
+  <div class="mt-16 flex w-full justify-center lg:mt-0 lg:w-1/2 lg:justify-end">
+    <img src="{% static 'img/Agent_W_logo.png' %}" alt="Agent W Logo" class="w-64 object-contain drop-shadow-2xl sm:w-80 lg:w-[28rem]">
+  </div>
+  
 </main>
 {% endblock %}
