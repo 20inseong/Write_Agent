@@ -5,10 +5,13 @@ venv/
 env/
 db.sqlite3
 
-# 환경 변수 (비밀번호, 시크릿 키 등)
+# 환경 변수
 .env
 
 # AI Prompts & saju, tarot data
 prompt.py
 tarot_data.py
 utils.py
+
+# Django static files
+staticfiles/
